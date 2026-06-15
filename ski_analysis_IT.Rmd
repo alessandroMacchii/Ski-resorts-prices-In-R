@@ -373,6 +373,21 @@ summary(anova_continent)
 TukeyHSD(anova_continent)
 ```
 
+### Cosa ci dice l'analisi
+
+I prezzi **non sono uguali** tra i continenti — le differenze sono ampie e consistenti.
+
+Confrontando ogni continente con l'**Europa** (riferimento, 360 comprensori):
+
+| Continente | Prezzo medio | Differenza vs Europa | Conclusione |
+|---|---|---|---|
+| Nord America | ~$82 | **+$38** | Molto più caro |
+| Oceania | ~$74 | **+$30** | Più caro |
+| Sud America | ~$60 | +$16 | Leggermente più caro (al limite) |
+| Asia | ~$41 | +$3 | Praticamente uguale |
+
+> **Messaggio chiave:** il Nord America è in una categoria a sé — uno skipass lì costa quasi il **doppio** rispetto a Europa e Asia. È il divario più grande trovato nell'intero studio.
+
 ```{r grafico-continente}
 # Grafico: prezzo per continente
 cont_data <- filter(resorts, !is.na(Price) & !is.na(Continent))
