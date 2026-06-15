@@ -551,12 +551,17 @@ cor.test(resorts$Mean_Snow, resorts$Price, use = "pairwise.complete.obs")
 ```
 
 ```{r grafico-neve}
-# Neve vs prezzo (Indiziato 4)
+# Neve vs prezzo (Indiziato 4) - Codice Corretto
 snow_plot_data <- filter(resorts, !is.na(Mean_Snow) & !is.na(Price))
+
 p_snow <- ggplot(snow_plot_data, aes(x = Mean_Snow, y = Price)) +
-  geom_point(alpha = 0.5, colour = blue) +
+  geom_point(alpha = 0.5, colour = "blue") + # Messo "blue" tra virgolette per evitare errori
+  
+  # Questa riga aggiunge la retta di regressione lineare (tendenza)
+  geom_smooth(method = "lm", se = TRUE, colour = "darkblue", fill = "lightblue") + 
+  
   labs(title = "Copertura nevosa vs prezzo",
-       subtitle = "Sostanzialmente nessuna relazione",
+       subtitle = "Relazione debole ma reale (r = 0.15, p = 0.0009)",
        x = "Copertura nevosa media", y = "Prezzo (USD)") +
   theme_minimal()
 
@@ -576,51 +581,48 @@ p_snow
 
 ```{r tabella-sintesi}
 # Consolida ogni risultato bivariato delle Sezioni 4-7 in un'unica tabella.
-
 summary_table <- data.frame(
   Factor = c(
-    "Maximum altitude (Highest point)",
-    "Total slopes",
-    "Total lifts",
-    "Vertical drop",
-    "Altitude band",
-    "Continent",
-    "National wealth (GDP per capita)",
-    "Summer skiing vs continent",
-    "Snowpark presence",
-    "Night skiing",
-    "Summer skiing",
-    "Child friendly",
-    "Seasonality (Season)",
-    "Snow cover vs price"
+    "Altitudine massima (Punto più alto)",
+    "Totale piste",
+    "Totale impianti",
+    "Dislivello",
+    "Fascia di altitudine",
+    "Continente",
+    "Ricchezza nazionale (PIL pro capite)",
+    "Presenza snowpark",
+    "Sci notturno",
+    "Sci estivo",
+    "Adatto ai bambini",
+    "Stagionalità (Stagione)",
+    "Copertura nevosa vs prezzo"
   ),
   Test_Type = c(
-    "Correlation", "Correlation", "Correlation", "Correlation",
-    "ANOVA", "ANOVA", "Correlation", "Chi-square",
+    "Correlazione", "Correlazione", "Correlazione", "Correlazione",
+    "ANOVA", "ANOVA", "Correlazione",
     "T-test", "T-test", "T-test", "T-test",
-    "ANOVA", "Correlation"
+    "ANOVA", "Correlazione"
   ),
   Statistic = c(
     0.41, 0.31, 0.10, 0.17,          # valori r
     41.21,                            # F (fascia altitudine)
     116.70,                           # F (continente)
     0.45,                             # r (PIL pro capite)
-    286.10,                           # Chi-quadrato (sci estivo vs continente)
     4.43, -0.64, 4.13, 0.35,          # valori t (servizi)
     2.92,                             # F (stagione)
     0.15                              # r (neve vs prezzo)
   ),
   P_value = c(
     "<0.001", "<0.001", "0.022", "<0.001",
-    "<0.001", "<0.001", "<0.001", "<0.001",
+    "<0.001", "<0.001", "<0.001",
     "<0.001", "0.525", "<0.001", "0.751",
     "0.034", "<0.001"
   ),
   Effect_Strength = c(
-    "Moderate", "Moderate", "Weak", "Weak",
-    "Moderate", "Strong", "Moderate", "Strong",
-    "Moderate", "Negligible", "Moderate", "Negligible",
-    "Weak", "Weak"
+    "Moderato", "Moderato", "Debole", "Debole",
+    "Moderato", "Forte", "Moderato",
+    "Moderato", "Trascurabile", "Moderato", "Trascurabile",
+    "Debole", "Debole"
   ),
   Interpretation = c(
     "Comprensori più alti costano di più; predittore numerico singolo più forte (r = 0,41).",
@@ -630,23 +632,24 @@ summary_table <- data.frame(
     "Il prezzo sale tra le fasce di altitudine: Very High è ~43 $ sopra Low.",
     "Il divario più grande di tutti: Nord America ~+38 $ vs Europa.",
     "Nei Paesi più ricchi i prezzi salgono (r = 0,45).",
-    "Forte legame servizio-geografia (V = 0,76): lo sci estivo è una questione di posizione.",
     "Lo snowpark aggiunge un premio reale di ~10 $ (54,6 vs 44,8).",
     "Nessuna differenza di prezzo tra comprensori con vs senza sci notturno.",
     "Apparente premio di +14 $, ma confuso con emisfero / ghiacciai.",
     "Quasi universale (495/499): nessun contrasto utile, non significativo.",
     "La stagionalità muove appena il prezzo; effetto piccolo e al limite.",
-    "La quantità di neve ha un legame positivo debole ma statisticamente molto significativo con il prezzo (r = 0,15, p < 0,001)."
+    "Legame positivo debole ma significativo (r = 0,15); risente di collinearità con l'altezza."
   ),
   stringsAsFactors = FALSE
 )
 
 summary_table
+
 ```
 
 ```{r tabella-ordinata}
 # Ordina per forza dell'effetto (più forte in cima).
-strength_levels <- c("Negligible", "Weak", "Moderate", "Strong", "Very strong")
+# FONDAMENTALE: i livelli ora devono essere in italiano!
+strength_levels <- c("Trascurabile", "Debole", "Moderato", "Forte", "Molto forte")
 
 summary_ranked <- summary_table %>%
   mutate(Strength_rank = factor(Effect_Strength, levels = strength_levels, ordered = TRUE)) %>%
