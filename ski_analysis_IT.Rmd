@@ -65,7 +65,6 @@ library(ggplot2)      # grafici
 # Colore "di casa" riutilizzato in tutti i grafici
 blue <- "#2c7fb8"
 ```
-
 # Importazione e pulizia dei dati
 
 *Ski Resorts* (Kaggle): 499 comprensori, 25 variabili (posizione, struttura,
@@ -626,10 +625,6 @@ summary_table <- data.frame(
 )
 
 summary_table
-
-```
-
-
 ```
 
 ## Interpretazione: classifica degli indiziati
