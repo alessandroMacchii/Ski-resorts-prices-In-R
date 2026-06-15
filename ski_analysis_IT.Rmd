@@ -369,37 +369,33 @@ confronto avviene in un'unica valuta.
 cor.test(resorts$GDP_per_capita, resorts$Price, use = "pairwise.complete.obs")
 ```
 
-```{r grafico-gdp-prezzo, fig.width=9, fig.height=6}
-da_etichettare <- c("United States", "Switzerland", "Norway",
-                    "Austria", "Japan", "Chile", "New Zealand", "Australia")
+```{r grafico-prezzo-medio-continente, fig.width=8, fig.height=5}
+cont_summary <- resorts %>%
+  filter(!is.na(Price), !is.na(Continent)) %>%
+  group_by(Continent) %>%
+  summarise(Prezzo_medio = round(mean(Price, na.rm = TRUE), 1), .groups = "drop")
 
-gdp_plot_data <- resorts %>%
-  filter(!is.na(Price), !is.na(GDP_per_capita)) %>%
-  mutate(etichetta = ifelse(Country %in% da_etichettare, Country, NA_character_))
-
-ggplot(gdp_plot_data, aes(x = GDP_per_capita / 1000, y = Price)) +
-  geom_point(aes(colour = Continent), alpha = 0.45, size = 2.2) +
-  geom_smooth(method = "lm", se = TRUE, colour = "gray30",
-              linetype = "dashed", linewidth = 0.9,
-              fill = "gray80", alpha = 0.25) +
-  geom_text(aes(label = etichetta, colour = Continent),
-            size = 3, vjust = -0.85, fontface = "italic",
-            na.rm = TRUE, show.legend = FALSE) +
-  scale_x_continuous(labels = function(x) paste0("$", x, "k")) +
-  scale_y_continuous(labels = function(x) paste0("$", x)) +
+ggplot(cont_summary,
+       aes(x = reorder(Continent, Prezzo_medio), y = Prezzo_medio)) +
+  geom_col(fill = blue, width = 0.65) +
+  geom_text(aes(label = paste0("$ ", Prezzo_medio)),
+            hjust = -0.12, fontface = "bold", size = 4.2, colour = "gray20") +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, max(cont_summary$Prezzo_medio) * 1.28),
+                     labels = function(x) paste0("$ ", x)) +
   labs(
-    title    = "Nei Paesi più ricchi gli skipass costano di più",
-    subtitle = "La linea tratteggiata mostra la tendenza generale (r = 0,46)",
-    x        = "Ricchezza del Paese — PIL pro capite (migliaia di USD)",
-    y        = "Prezzo skipass (USD)",
-    colour   = "Continente",
-    caption  = "Ogni punto = un comprensorio | r = 0,46, p < 0,001 | 499 comprensori"
+    title   = "Il Nord America è il continente più caro",
+    subtitle = "Prezzo medio dello skipass per continente (USD)",
+    x       = NULL,
+    y       = "Prezzo medio (USD)",
+    caption = "499 comprensori sciistici nel mondo | dati 2022/23"
   ) +
   theme_minimal(base_size = 13) +
   theme(
-    plot.title    = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(colour = "gray45", size = 11),
-    plot.caption  = element_text(colour = "gray60", size = 9)
+    panel.grid.major.y = element_blank(),
+    plot.title         = element_text(face = "bold", size = 14),
+    plot.subtitle      = element_text(colour = "gray45", size = 11),
+    plot.caption       = element_text(colour = "gray60", size = 9)
   )
 ```
 
