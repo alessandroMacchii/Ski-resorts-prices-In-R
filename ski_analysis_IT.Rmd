@@ -450,21 +450,6 @@ t.test(resorts$Price[resorts$`Child friendly` == "Yes"],
        resorts$Price[resorts$`Child friendly` == "No"])
 ```
 
-## Associazione tra sci estivo e geografia (Chi-quadrato)
-
-Lo sci estivo *sembra* un sovrapprezzo: verifichiamo se non sia in realtà una
-caratteristica geografica. Mettiamo in relazione due variabili categoriche con un
-test **Chi-quadrato** e ne misuriamo la forza con il **V di Cramér** (0 = nessuna
-associazione, 1 = perfetta).
-
-```{r chiquadrato-sciestivo}
-tab_summer <- table(resorts$`Summer skiing`, resorts$Continent)
-tab_summer
-
-chisq.test(tab_summer)
-cramerV(tab_summer)
-```
-
 ## ANOVA: prezzo per stagionalità
 
 `Year_Round` e `Multi_Season` sono minuscole (4 ciascuna), quindi questo è
@@ -484,9 +469,7 @@ TukeyHSD(anova_season)
 > I servizi non sono un sovrapprezzo uniforme. Lo **snowpark** aggiunge un premio
 > reale di **~10 $** (54,6 vs 44,8 $, p < 0,001); **sci notturno** (p ≈ 0,52) e
 > **adatto ai bambini** (p ≈ 0,75, quasi universale: 495/499) non aggiungono
-> nulla. Lo **sci estivo** sembra un premio di +14 $ ma è in realtà geografico:
-> il Chi-quadrato lo lega fortissimamente al continente (V di Cramér ≈ 0,76) — è
-> la posizione, non la scelta commerciale.
+> nulla. Lo **sci estivo** sembra un premio di +14 $ ma è in realtà un fattore geografico.
 
 # Indiziato 4 — La neve vera e propria
 
