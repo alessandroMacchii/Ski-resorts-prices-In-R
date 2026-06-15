@@ -629,14 +629,14 @@ summary_table <- data.frame(
     "Il dislivello ha un legame positivo debole con il prezzo (r = 0,17).",
     "Il prezzo sale tra le fasce di altitudine: Very High è ~43 $ sopra Low.",
     "Il divario più grande di tutti: Nord America ~+38 $ vs Europa.",
-    "Nei Paesi più ricchi i prezzi salgono (r = 0,46).",
+    "Nei Paesi più ricchi i prezzi salgono (r = 0,45).",
     "Forte legame servizio-geografia (V = 0,76): lo sci estivo è una questione di posizione.",
     "Lo snowpark aggiunge un premio reale di ~10 $ (54,6 vs 44,8).",
     "Nessuna differenza di prezzo tra comprensori con vs senza sci notturno.",
     "Apparente premio di +14 $, ma confuso con emisfero / ghiacciai.",
     "Quasi universale (495/499): nessun contrasto utile, non significativo.",
     "La stagionalità muove appena il prezzo; effetto piccolo e al limite.",
-    "Nessun legame utile tra quantità di neve e prezzo (r = 0,15)."
+    "La quantità di neve ha un legame positivo debole ma statisticamente molto significativo con il prezzo (r = 0,15, p < 0,001)."
   ),
   stringsAsFactors = FALSE
 )
