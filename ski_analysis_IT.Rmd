@@ -646,19 +646,7 @@ summary_table
 
 ```
 
-```{r tabella-ordinata}
-# Ordina per forza dell'effetto (più forte in cima).
-# FONDAMENTALE: i livelli ora devono essere in italiano!
-strength_levels <- c("Trascurabile", "Debole", "Moderato", "Forte", "Molto forte")
 
-summary_ranked <- summary_table %>%
-  mutate(Strength_rank = factor(Effect_Strength, levels = strength_levels, ordered = TRUE)) %>%
-  arrange(desc(Strength_rank), desc(abs(Statistic))) %>%
-  select(-Strength_rank)
-
-# L'ordinamento secondario per |Statistic| vale solo all'interno di una stessa
-# fascia di forza (r, F, t, Chi-quadrato non sono comparabili tra loro).
-print(summary_ranked, row.names = FALSE)
 ```
 
 ## Interpretazione: classifica degli indiziati
@@ -690,25 +678,9 @@ lega al continente con V di Cramér = 0,76.
 volta, quindi non sanno districare del tutto le cause confuse tra loro (è il
 continente, o il fatto che quei comprensori sono anche più grandi e più alti?).
 
-# Conclusioni
 
-## Riepilogo delle analisi
 
-| Fattore (indiziato) | Test | Risultato | Effetto |
-|---|---|---|---|
-| Continente — geografia | ANOVA | Nord America ~+38 $ sull'Europa (F ≈ 117, p < 0,001) | **Forte** |
-| Ricchezza nazionale — PIL pro capite | Correlazione | r ≈ 0,46 (p < 0,001): i Paesi più ricchi fanno pagare di più | Moderato |
-| Altitudine massima | Correlazione | r ≈ 0,41 (p < 0,001): i comprensori più alti costano di più | Moderato |
-| Dimensione — totale piste | Correlazione | r ≈ 0,31 (p < 0,001) | Moderato |
-| Snowpark | t-test | premio di ~+10 $ (p < 0,001) | Moderato |
-| Sci estivo | t-test / Chi-quadrato | apparente +14 $, ma in realtà geografico (V ≈ 0,76) | Debole |
-| Dislivello / totale impianti | Correlazione | r ≈ 0,17 / 0,10 | Debole |
-| Stagionalità | ANOVA | F ≈ 2,9, p ≈ 0,034 | Debole |
-| Sci notturno / adatto ai bambini | t-test | nessuna differenza di prezzo significativa | Trascurabile |
-| Copertura nevosa | Correlazione | nessun legame utile — è altitudine "mascherata" | Trascurabile |
 
-**In una frase:** il prezzo di uno skipass è guidato soprattutto da **geografia
-(continente), ricchezza nazionale e altitudine** — non dalla neve né dai servizi.
 
 ## Limiti
 

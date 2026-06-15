@@ -3882,213 +3882,65 @@ summary_table</code></pre>
 {"columns":[{"label":["Factor"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Test_Type"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Statistic"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["P_value"],"name":[4],"type":["chr"],"align":["left"]},{"label":["Effect_Strength"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Interpretation"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"Altitudine massima (Punto più alto)","2":"Correlazione","3":"0.41","4":"<0.001","5":"Moderato","6":"Comprensori più alti costano di più; predittore numerico singolo più forte (r = 0,41)."},{"1":"Totale piste","2":"Correlazione","3":"0.31","4":"<0.001","5":"Moderato","6":"Aree sciabili più grandi costano di più, ma il legame è solo moderato (r = 0,31)."},{"1":"Totale impianti","2":"Correlazione","3":"0.10","4":"0.022","5":"Debole","6":"Il numero di impianti è appena legato al prezzo (r = 0,10)."},{"1":"Dislivello","2":"Correlazione","3":"0.17","4":"<0.001","5":"Debole","6":"Il dislivello ha un legame positivo debole con il prezzo (r = 0,17)."},{"1":"Fascia di altitudine","2":"ANOVA","3":"41.21","4":"<0.001","5":"Moderato","6":"Il prezzo sale tra le fasce di altitudine: Very High è ~43 $ sopra Low."},{"1":"Continente","2":"ANOVA","3":"116.70","4":"<0.001","5":"Forte","6":"Il divario più grande di tutti: Nord America ~+38 $ vs Europa."},{"1":"Ricchezza nazionale (PIL pro capite)","2":"Correlazione","3":"0.45","4":"<0.001","5":"Moderato","6":"Nei Paesi più ricchi i prezzi salgono (r = 0,45)."},{"1":"Presenza snowpark","2":"T-test","3":"4.43","4":"<0.001","5":"Moderato","6":"Lo snowpark aggiunge un premio reale di ~10 $ (54,6 vs 44,8)."},{"1":"Sci notturno","2":"T-test","3":"-0.64","4":"0.525","5":"Trascurabile","6":"Nessuna differenza di prezzo tra comprensori con vs senza sci notturno."},{"1":"Sci estivo","2":"T-test","3":"4.13","4":"<0.001","5":"Moderato","6":"Apparente premio di +14 $, ma confuso con emisfero / ghiacciai."},{"1":"Adatto ai bambini","2":"T-test","3":"0.35","4":"0.751","5":"Trascurabile","6":"Quasi universale (495/499): nessun contrasto utile, non significativo."},{"1":"Stagionalità (Stagione)","2":"ANOVA","3":"2.92","4":"0.034","5":"Debole","6":"La stagionalità muove appena il prezzo; effetto piccolo e al limite."},{"1":"Copertura nevosa vs prezzo","2":"Correlazione","3":"0.15","4":"<0.001","5":"Debole","6":"Legame positivo debole ma significativo (r = 0,15); risente di collinearità con l'altezza."}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<pre class="r"><code># Ordina per forza dell&#39;effetto (più forte in cima).
-# FONDAMENTALE: i livelli ora devono essere in italiano!
-strength_levels &lt;- c(&quot;Trascurabile&quot;, &quot;Debole&quot;, &quot;Moderato&quot;, &quot;Forte&quot;, &quot;Molto forte&quot;)
+<pre><code>
+## Interpretazione: classifica degli indiziati
 
-summary_ranked &lt;- summary_table %&gt;%
-  mutate(Strength_rank = factor(Effect_Strength, levels = strength_levels, ordered = TRUE)) %&gt;%
-  arrange(desc(Strength_rank), desc(abs(Statistic))) %&gt;%
-  select(-Strength_rank)
+**I tre principali motori del prezzo.**
 
-# L&#39;ordinamento secondario per |Statistic| vale solo all&#39;interno di una stessa
-# fascia di forza (r, F, t, Chi-quadrato non sono comparabili tra loro).
-print(summary_ranked, row.names = FALSE)</code></pre>
-<pre><code>##                                Factor    Test_Type Statistic P_value
-##                            Continente        ANOVA    116.70  &lt;0.001
-##                  Fascia di altitudine        ANOVA     41.21  &lt;0.001
-##                     Presenza snowpark       T-test      4.43  &lt;0.001
-##                            Sci estivo       T-test      4.13  &lt;0.001
-##  Ricchezza nazionale (PIL pro capite) Correlazione      0.45  &lt;0.001
-##   Altitudine massima (Punto più alto) Correlazione      0.41  &lt;0.001
-##                          Totale piste Correlazione      0.31  &lt;0.001
-##               Stagionalità (Stagione)        ANOVA      2.92   0.034
-##                            Dislivello Correlazione      0.17  &lt;0.001
-##            Copertura nevosa vs prezzo Correlazione      0.15  &lt;0.001
-##                       Totale impianti Correlazione      0.10   0.022
-##                          Sci notturno       T-test     -0.64   0.525
-##                     Adatto ai bambini       T-test      0.35   0.751
-##  Effect_Strength
-##            Forte
-##         Moderato
-##         Moderato
-##         Moderato
-##         Moderato
-##         Moderato
-##         Moderato
-##           Debole
-##           Debole
-##           Debole
-##           Debole
-##     Trascurabile
-##     Trascurabile
-##                                                                              Interpretation
-##                              Il divario più grande di tutti: Nord America ~+38 $ vs Europa.
-##                     Il prezzo sale tra le fasce di altitudine: Very High è ~43 $ sopra Low.
-##                               Lo snowpark aggiunge un premio reale di ~10 $ (54,6 vs 44,8).
-##                             Apparente premio di +14 $, ma confuso con emisfero / ghiacciai.
-##                                           Nei Paesi più ricchi i prezzi salgono (r = 0,45).
-##      Comprensori più alti costano di più; predittore numerico singolo più forte (r = 0,41).
-##           Aree sciabili più grandi costano di più, ma il legame è solo moderato (r = 0,31).
-##                        La stagionalità muove appena il prezzo; effetto piccolo e al limite.
-##                        Il dislivello ha un legame positivo debole con il prezzo (r = 0,17).
-##  Legame positivo debole ma significativo (r = 0,15); risente di collinearità con l&#39;altezza.
-##                                 Il numero di impianti è appena legato al prezzo (r = 0,10).
-##                     Nessuna differenza di prezzo tra comprensori con vs senza sci notturno.
-##                      Quasi universale (495/499): nessun contrasto utile, non significativo.</code></pre>
-</div>
-<div id="interpretazione-classifica-degli-indiziati" class="section level2" number="8.2">
-<h2><span class="header-section-number">8.2</span> Interpretazione:
-classifica degli indiziati</h2>
-<p><strong>I tre principali motori del prezzo.</strong></p>
-<ul>
-<li><strong>Continente</strong> — il fattore più forte (ANOVA F = 116,7,
-p &lt; 0,001): i comprensori nordamericani fanno pagare ~38 $ più di
-quelli europei, il divario più ampio dello studio.</li>
-<li><strong>Ricchezza nazionale</strong> (PIL pro capite, r = 0,46, p
-&lt; 0,001) — i Paesi più ricchi fanno pagare di più.</li>
-<li><strong>Altitudine massima</strong> — la correlazione numerica più
-forte (r = 0,41, p &lt; 0,001) e chiara tra le fasce (F = 41,2; “Very
-High” ~43 $ sopra “Low”).</li>
-</ul>
-<p><strong>Dimensione del comprensorio</strong> (totale piste, r = 0,31,
-p &lt; 0,001) — le aree più grandi costano di più, in modo moderato.</p>
-<p><strong>Indiziati deboli.</strong> Numero di impianti (r = 0,10) e
-dislivello (r = 0,17) sono significativi ma trascurabili; la
-stagionalità è al limite (F = 2,9, p = 0,034); sci notturno (p = 0,52) e
-adatto ai bambini (p = 0,75) non mostrano differenze di prezzo.</p>
-<p><strong>Sorprese.</strong> I servizi non sono un premio uniforme: lo
-snowpark aggiunge ~10 $ (p &lt; 0,001) ma sci notturno e baby-friendly
-non aggiungono nulla. Lo <strong>sci estivo</strong> sembra un premio di
-+14 $ ma è in realtà geografia — il Chi-quadrato lo lega al continente
-con V di Cramér = 0,76.</p>
-<p><strong>Limite.</strong> Sono tutti risultati <em>bivariati</em>:
-ciascuno guarda un fattore alla volta, quindi non sanno districare del
-tutto le cause confuse tra loro (è il continente, o il fatto che quei
-comprensori sono anche più grandi e più alti?).</p>
-</div>
-</div>
-<div id="conclusioni" class="section level1" number="9">
-<h1><span class="header-section-number">9</span> Conclusioni</h1>
-<div id="riepilogo-delle-analisi" class="section level2" number="9.1">
-<h2><span class="header-section-number">9.1</span> Riepilogo delle
-analisi</h2>
-<table>
-<colgroup>
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
-<col width="25%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Fattore (indiziato)</th>
-<th>Test</th>
-<th>Risultato</th>
-<th>Effetto</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Continente — geografia</td>
-<td>ANOVA</td>
-<td>Nord America ~+38 $ sull’Europa (F ≈ 117, p &lt; 0,001)</td>
-<td><strong>Forte</strong></td>
-</tr>
-<tr class="even">
-<td>Ricchezza nazionale — PIL pro capite</td>
-<td>Correlazione</td>
-<td>r ≈ 0,46 (p &lt; 0,001): i Paesi più ricchi fanno pagare di più</td>
-<td>Moderato</td>
-</tr>
-<tr class="odd">
-<td>Altitudine massima</td>
-<td>Correlazione</td>
-<td>r ≈ 0,41 (p &lt; 0,001): i comprensori più alti costano di più</td>
-<td>Moderato</td>
-</tr>
-<tr class="even">
-<td>Dimensione — totale piste</td>
-<td>Correlazione</td>
-<td>r ≈ 0,31 (p &lt; 0,001)</td>
-<td>Moderato</td>
-</tr>
-<tr class="odd">
-<td>Snowpark</td>
-<td>t-test</td>
-<td>premio di ~+10 $ (p &lt; 0,001)</td>
-<td>Moderato</td>
-</tr>
-<tr class="even">
-<td>Sci estivo</td>
-<td>t-test / Chi-quadrato</td>
-<td>apparente +14 $, ma in realtà geografico (V ≈ 0,76)</td>
-<td>Debole</td>
-</tr>
-<tr class="odd">
-<td>Dislivello / totale impianti</td>
-<td>Correlazione</td>
-<td>r ≈ 0,17 / 0,10</td>
-<td>Debole</td>
-</tr>
-<tr class="even">
-<td>Stagionalità</td>
-<td>ANOVA</td>
-<td>F ≈ 2,9, p ≈ 0,034</td>
-<td>Debole</td>
-</tr>
-<tr class="odd">
-<td>Sci notturno / adatto ai bambini</td>
-<td>t-test</td>
-<td>nessuna differenza di prezzo significativa</td>
-<td>Trascurabile</td>
-</tr>
-<tr class="even">
-<td>Copertura nevosa</td>
-<td>Correlazione</td>
-<td>nessun legame utile — è altitudine “mascherata”</td>
-<td>Trascurabile</td>
-</tr>
-</tbody>
-</table>
-<p><strong>In una frase:</strong> il prezzo di uno skipass è guidato
-soprattutto da <strong>geografia (continente), ricchezza nazionale e
-altitudine</strong> — non dalla neve né dai servizi.</p>
-</div>
-<div id="limiti" class="section level2" number="9.2">
-<h2><span class="header-section-number">9.2</span> Limiti</h2>
-<ul>
-<li>9 prezzi mascherati come zero (gestiti come NA)</li>
-<li><code>Season</code> ha richiesto una forte ricodifica da 31 valori
-grezzi</li>
-<li>Oceania (10) e Sud America (7) sottorappresentati</li>
-<li>I prezzi sono una fotografia del 2022/23 → nessuna dimensione
-temporale</li>
-<li>Correlazione ≠ causalità: associazioni, non meccanismi causali</li>
-<li>Il PIL pro capite è a livello di Paese, non di comprensorio
-(inferenza ecologica)</li>
-<li>Prezzi convertiti EUR→USD a un unico tasso medio 2022 (1 EUR = 1,053
-USD)</li>
-</ul>
-<hr />
-</div>
-</div>
-<div id="fonti-e-riferimenti" class="section level1" number="10">
-<h1><span class="header-section-number">10</span> Fonti e
-riferimenti</h1>
-<ul>
-<li><strong>Ski Resorts</strong>: Pedersen, U. T. (2023). Kaggle. <a href="https://www.kaggle.com/datasets/ulrikthygepedersen/ski-resorts" class="uri">https://www.kaggle.com/datasets/ulrikthygepedersen/ski-resorts</a></li>
-<li><strong>Snow Cover</strong>: incluso nel pacchetto Kaggle
-(<code>snow.csv</code>)</li>
-<li><strong>PIL pro capite</strong>: World Bank Open Data, 2022 (US$
-correnti). <a href="https://data.worldbank.org/indicator/NY.GDP.PCAP.CD" class="uri">https://data.worldbank.org/indicator/NY.GDP.PCAP.CD</a></li>
-</ul>
-<hr />
-</div>
-<div id="appendice-informazioni-sulla-sessione" class="section level1" number="11">
-<h1><span class="header-section-number">11</span> Appendice:
-informazioni sulla sessione</h1>
-<pre class="r"><code>sessionInfo()</code></pre>
+- **Continente** — il fattore più forte (ANOVA F = 116,7, p &lt; 0,001): i
+  comprensori nordamericani fanno pagare ~38 $ più di quelli europei, il divario
+  più ampio dello studio.
+- **Ricchezza nazionale** (PIL pro capite, r = 0,46, p &lt; 0,001) — i Paesi più
+  ricchi fanno pagare di più.
+- **Altitudine massima** — la correlazione numerica più forte (r = 0,41, p &lt; 0,001)
+  e chiara tra le fasce (F = 41,2; &quot;Very High&quot; ~43 $ sopra &quot;Low&quot;).
+
+**Dimensione del comprensorio** (totale piste, r = 0,31, p &lt; 0,001) — le aree più
+grandi costano di più, in modo moderato.
+
+**Indiziati deboli.** Numero di impianti (r = 0,10) e dislivello (r = 0,17) sono
+significativi ma trascurabili; la stagionalità è al limite (F = 2,9, p = 0,034);
+sci notturno (p = 0,52) e adatto ai bambini (p = 0,75) non mostrano differenze di
+prezzo.
+
+**Sorprese.** I servizi non sono un premio uniforme: lo snowpark aggiunge ~10 $
+(p &lt; 0,001) ma sci notturno e baby-friendly non aggiungono nulla. Lo **sci
+estivo** sembra un premio di +14 $ ma è in realtà geografia — il Chi-quadrato lo
+lega al continente con V di Cramér = 0,76.
+
+**Limite.** Sono tutti risultati *bivariati*: ciascuno guarda un fattore alla
+volta, quindi non sanno districare del tutto le cause confuse tra loro (è il
+continente, o il fatto che quei comprensori sono anche più grandi e più alti?).
+
+
+
+
+
+## Limiti
+
+- 9 prezzi mascherati come zero (gestiti come NA)
+- `Season` ha richiesto una forte ricodifica da 31 valori grezzi
+- Oceania (10) e Sud America (7) sottorappresentati
+- I prezzi sono una fotografia del 2022/23 → nessuna dimensione temporale
+- Correlazione ≠ causalità: associazioni, non meccanismi causali
+- Il PIL pro capite è a livello di Paese, non di comprensorio (inferenza ecologica)
+- Prezzi convertiti EUR→USD a un unico tasso medio 2022 (1 EUR = 1,053 USD)
+
+---
+
+# Fonti e riferimenti
+
+- **Ski Resorts**: Pedersen, U. T. (2023). Kaggle. &lt;https://www.kaggle.com/datasets/ulrikthygepedersen/ski-resorts&gt;
+- **Snow Cover**: incluso nel pacchetto Kaggle (`snow.csv`)
+- **PIL pro capite**: World Bank Open Data, 2022 (US$ correnti). &lt;https://data.worldbank.org/indicator/NY.GDP.PCAP.CD&gt;
+
+---
+
+# Appendice: informazioni sulla sessione
+
+
+``` r
+sessionInfo()</code></pre>
 <pre><code>## R version 4.5.3 (2026-03-11 ucrt)
 ## Platform: x86_64-w64-mingw32/x64
 ## Running under: Windows 11 x64 (build 26200)
@@ -4139,6 +3991,7 @@ informazioni sulla sessione</h1>
 ## [76] rlang_1.2.0         Rcpp_1.1.1-1.1      glue_1.8.1         
 ## [79] rstudioapi_0.18.0   jsonlite_2.0.0      plyr_1.8.9         
 ## [82] R6_2.6.1            multcompView_0.1-11 fs_2.1.0</code></pre>
+</div>
 </div>
 
 
