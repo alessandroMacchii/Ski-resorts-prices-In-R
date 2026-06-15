@@ -1,5 +1,6 @@
 # Theory & Methods: Why These Choices, and What Each Test Actually Does
 
+
 A companion to `ski_analysis.ipynb`. The notebook itself shows *what* was run and
 *what came out*; this file explains the *why* — the reasoning behind the design,
 and the statistical idea behind every test, in plain language.
