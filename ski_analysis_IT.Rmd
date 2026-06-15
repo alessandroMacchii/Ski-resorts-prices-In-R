@@ -313,19 +313,6 @@ TukeyHSD(anova_altitude)
 **Ipotesi:** i prezzi variano per regione a causa del contesto economico di ogni
 Paese (potere d'acquisto, costo della vita, mercato turistico).
 
-## Prezzo per continente
-
-```{r prezzo-per-continente}
-resorts %>%
-  group_by(Continent) %>%
-  summarise(
-    N = n(),
-    Mean_Price = round(mean(Price, na.rm = TRUE), 2),
-    Median_Price = median(Price, na.rm = TRUE),
-    SD_Price = round(sd(Price, na.rm = TRUE), 2)
-  )
-```
-
 ## ANOVA: prezzo per continente
 
 **Ipotesi:**
@@ -336,7 +323,6 @@ resorts %>%
 ```{r anova-continente}
 anova_continent <- aov(Price ~ Continent, data = resorts)
 summary(anova_continent)
-TukeyHSD(anova_continent)
 ```
 
 ### Cosa ci dice l'analisi
@@ -380,8 +366,41 @@ confronto avviene in un'unica valuta.
 
 ```{r correlazioni-economia}
 # Correlazione: prezzo vs PIL pro capite (ricchezza nazionale)
-# Sia Price sia GDP_per_capita sono in dollari USA.
 cor.test(resorts$GDP_per_capita, resorts$Price, use = "pairwise.complete.obs")
+```
+
+```{r grafico-gdp-prezzo, fig.width=9, fig.height=6}
+da_etichettare <- c("United States", "Switzerland", "Norway",
+                    "Austria", "Japan", "Chile", "New Zealand", "Australia")
+
+gdp_plot_data <- resorts %>%
+  filter(!is.na(Price), !is.na(GDP_per_capita)) %>%
+  mutate(etichetta = ifelse(Country %in% da_etichettare, Country, NA_character_))
+
+ggplot(gdp_plot_data, aes(x = GDP_per_capita / 1000, y = Price)) +
+  geom_point(aes(colour = Continent), alpha = 0.45, size = 2.2) +
+  geom_smooth(method = "lm", se = TRUE, colour = "gray30",
+              linetype = "dashed", linewidth = 0.9,
+              fill = "gray80", alpha = 0.25) +
+  geom_text(aes(label = etichetta, colour = Continent),
+            size = 3, vjust = -0.85, fontface = "italic",
+            na.rm = TRUE, show.legend = FALSE) +
+  scale_x_continuous(labels = function(x) paste0("$", x, "k")) +
+  scale_y_continuous(labels = function(x) paste0("$", x)) +
+  labs(
+    title    = "Nei Paesi più ricchi gli skipass costano di più",
+    subtitle = "La linea tratteggiata mostra la tendenza generale (r = 0,46)",
+    x        = "Ricchezza del Paese — PIL pro capite (migliaia di USD)",
+    y        = "Prezzo skipass (USD)",
+    colour   = "Continente",
+    caption  = "Ogni punto = un comprensorio | r = 0,46, p < 0,001 | 499 comprensori"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(colour = "gray45", size = 11),
+    plot.caption  = element_text(colour = "gray60", size = 9)
+  )
 ```
 
 ## Conclusione preliminare — analisi 2
