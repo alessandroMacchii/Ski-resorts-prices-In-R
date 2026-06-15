@@ -79,8 +79,10 @@ Decisions: `Price` (9 zeros) and `Total lifts` (1 zero) are impossible →
 treat as NA. Zeros in slope-difficulty / snow-cannon / gondola / longest-run
 columns are plausible → keep.
 
-**Cell 14 — *(code)* Convert impossible zeros to NA.**
-Sets `Price == 0` and `Total lifts == 0` to `NA`, then re-counts NAs to confirm.
+**Cell 14 — *(code)* Convert impossible zeros to NA + EUR→USD.**
+Sets `Price == 0` and `Total lifts == 0` to `NA`, then **converts `Price` from
+EUR to USD** (2022 ECB average, `EUR_USD_2022 <- 1.053`) so the price shares the
+currency of GDP per capita. Re-counts NAs to confirm.
 
 **Cell 15 — *(markdown)* "Season" variable intro.**
 Notes the variable is messy (many raw strings plus "Unknown").
@@ -107,39 +109,36 @@ them into the 4 clean categories. Verifies with `table(..., useNA = "ifany")`.
 
 ## Section 2.6 — External Data (World Bank)
 
-**Cell 21 — *(markdown)* Loading External Datasets.**
-Explains the two World Bank (2022) indicators added to enrich the analysis:
-**GDP per capita** (proxy for national wealth) and **PPP** (proxy for cost of
-living / local price level). Notes the files arrive in *raw* World Bank layout
-and must be cleaned first.
+**Cell 21 — *(markdown)* Loading External Dataset.**
+Explains the World Bank (2022) **GDP per capita** (current US$) indicator added
+as a proxy for national wealth. Notes the file arrives in *raw* World Bank layout
+and must be cleaned first. *(The World Bank PPP conversion factor was dropped —
+it is denominated in local currency units per international dollar, so its
+cross-country values reflect currency denomination, not local price levels.)*
 
 **Cell 22 — *(markdown)* "Preparing the World Bank files".**
 Explains the cleaning step and the `_raw` → `_clean` file convention (raw and
 clean kept side by side for reproducibility/auditing).
 
-**Cell 23 — *(code)* Clean the raw World Bank files.** ⭐ key data-prep cell
-Defines `clean_worldbank()`, which for each raw file:
-1. `read.csv(..., skip = 4, check.names = FALSE)` — skips the 4-line metadata
-   preamble and preserves original column names.
+**Cell 23 — *(code)* Clean the raw World Bank file.** ⭐ key data-prep cell
+Defines `clean_worldbank()`, which for the raw file:
+1. `import(..., skip = 4)` — skips the 4-line metadata preamble.
 2. Keeps only `Country Name` + the **2022** column, renaming the value column
-   (`GDP_per_capita` / `PPP`).
+   (`GDP_per_capita`).
 3. Applies `rename_map` to align World Bank country spellings to the resorts
    dataset (e.g. "Czechia" → "Czech Republic", "Korea, Rep." → "South Korea").
 
-Runs it on both files and `export()`s tidy `gdp_per_capita_clean.csv` and
-`ppp_clean.csv` into `data/`.
+Runs it on the GDP file and `export()`s tidy `gdp_per_capita_clean.csv` into
+`data/`.
 
-**Cell 24 — *(code)* Load clean files & merge.**
-Imports the two `_clean.csv` files and `merge(..., by = "Country", all.x = TRUE)`
+**Cell 24 — *(code)* Load clean file & merge.**
+Imports `gdp_per_capita_clean.csv` and `merge(..., by = "Country", all.x = TRUE)`
 onto `resorts` (left join — keeps all 499 resorts), then prints any countries
-that failed to match. *Result:* GDP matches all 38 resort countries; only
-**Liechtenstein** lacks a PPP value (a real gap in the source, not a naming
-issue).
+that failed to match. *Result:* GDP matches all resort countries.
 
 **Cell 25 — *(markdown)* Team note + Suspect 1 header.**
-Documents that name-alignment is handled in code (one `rename_map` fixes both
-merges) and that Liechtenstein's missing PPP is expected. Then opens **Suspect
-1** with its hypothesis.
+Documents that name-alignment is handled in code (one `rename_map`). Then opens
+**Suspect 1** with its hypothesis.
 
 ---
 
@@ -154,8 +153,8 @@ merges) and that Liechtenstein's missing PPP is expected. Then opens **Suspect
 A `ggplot2` histogram of price with a median line — the first inline chart.
 
 **Cell 28 — *(markdown)* Distribution + correlation hypotheses.**
-Notes price is right-skewed (mean 51.4 > median 45) and states the H0/H1 used
-for all correlation tests.
+Notes price is right-skewed (mean 54.1 USD > median 47.4 USD) and states the
+H0/H1 used for all correlation tests.
 
 **Cell 29 — *(code)* Correlations with price.**
 `cor.test()` of price against `Highest point`, `Total slopes`, `Total lifts`,
@@ -192,21 +191,21 @@ and the "Price by Continent" sub-header.
 
 **Cell 36 — *(code)* ANOVA: Price by Continent.**
 `aov()` + `summary()` + `TukeyHSD()`. F ≈ 117, p < 0.001 — the largest effect
-in the study; North America ~+36 EUR vs Europe.
+in the study; North America ~+38 USD vs Europe.
 
 **Cell 37 — *(code)* Price by continent boxplot (ggplot).**
 Boxplot of price per continent — visualizes the single biggest driver.
 
-**Cell 38 — *(markdown)* Wealth vs cost-of-living framing.**
-Frames two complementary questions: GDP → "do prices reflect national wealth?";
-PPP → "do prices reflect local cost of living?" Notes the two need not align
-(Norway: rich *and* expensive; USA: rich but mid price level).
+**Cell 38 — *(markdown)* National-wealth framing.**
+Frames the question GDP → "do prices reflect national wealth?", noting that both
+`Price` and GDP per capita are now in US dollars (single currency).
 
-**Cell 39 — *(code)* Correlations: price vs GDP and vs PPP.**
-`cor.test()` for `GDP_per_capita` and `PPP`. *Result:* GDP r≈0.46 (moderate,
-significant); PPP r≈−0.04 (essentially zero, not significant). ⚠️ Note the World
-Bank PPP *conversion factor* runs opposite to a cost-of-living index (higher =
-cheaper local prices) — keep that in mind when writing the interpretation.
+**Cell 39 — *(code)* Correlation: price vs GDP.**
+`cor.test()` for `GDP_per_capita`. *Result:* GDP r≈0.46 (moderate, significant) —
+richer countries charge more. *(The earlier PPP correlation was removed: the World
+Bank PPP conversion factor is in local-currency units per international dollar, so
+its cross-country values track currency denomination, not price levels — the
+correlation was meaningless.)*
 
 **Cell 40 — *(markdown)* Suspect 2 conclusion (placeholder) + Suspect 3 header.**
 Conclusion is a "*To be written*" stub; opens **Suspect 3** with its hypothesis
@@ -334,7 +333,7 @@ that **only the raw coefficient table from `summary(model)`** is reported.
 Builds `model_data` by `select()`ing price + predictors and `na.omit()`ing, then
 fits `lm(Price ~ .)`. Predictors cover **three of the four suspects**: Suspect 1
 (`Highest point`, `Total slopes`, `Total lifts`), Suspect 2 (`Continent`,
-`GDP_per_capita`, `PPP`), Suspect 3 (`Snowparks`, `Nightskiing`, `Summer skiing`,
+`GDP_per_capita`), Suspect 3 (`Snowparks`, `Nightskiing`, `Summer skiing`,
 `Season`). **Only snow (Suspect 4) is held out** — it matched just ~125 of 499
 resorts, so including it would gut the sample; it gets its own model in cell 61.
 Prints sample size + `summary(model)`.
@@ -342,7 +341,7 @@ Prints sample size + `summary(model)`.
 **Cell 60 — *(markdown)* Reading the main model.**
 How to read the raw coefficients (`Estimate`, `Pr(>|t|)`, Adjusted R²): maximum
 altitude, continent (North America) and GDP carry the clear significant effects;
-snowpark adds a small premium; PPP, night skiing, summer skiing and season add
+snowpark adds a small premium; night skiing, summer skiing and season add
 little. Ends by explicitly noting that **variance decomposition (`anova(lm)`)
 and standardized coefficients (`scale()`) are omitted as out of course scope** —
 raw coefficients only.
@@ -357,8 +356,8 @@ altitude.
 **Cell 62 — *(markdown)* Reading the regression.**
 How to interpret both models, what to expect (continent + altitude stay on top;
 summer-skiing's apparent effect shrinks once continent is in = the confounding
-made explicit; PPP adds little beyond GDP; snow has no independent effect once
-altitude/continent are present), and caveats (small snow sample,
+made explicit; snow has no independent effect once altitude/continent are
+present), and caveats (small snow sample,
 multicollinearity, association ≠ causation).
 
 ---
@@ -389,14 +388,14 @@ practical implications, and open questions. The **Limitations** list *is*
 written (masked zeros, heavy Season recoding, under-represented continents,
 single-year snapshot, correlation≠causation, country-level external data). Ends
 with the **Data Sources & References** list (Kaggle ski resorts + snow, World
-Bank GDP, World Bank PPP) and an Appendix session-info header.
+Bank GDP) and an Appendix session-info header.
 
 ---
 
 ### Quick mental model
 
 ```
-Import → Clean (NAs, Season, derived vars) → Merge external (GDP, PPP, snow)
+Import → Clean (NAs, Season, derived vars) → Merge external (GDP, snow)
       → Test each suspect bivariately (Sec 4–7)
       → Consolidate + rank all results (Sec 8)
       → Multiple regression: all factors at once (Sec 8.5)

@@ -39,7 +39,7 @@ factor into a single model. The methods used are:
 - **Descriptive statistics** — `summary()`, group means/medians/SD, histograms,
   frequency tables.
 - **Correlation tests** (`cor.test`) — for continuous predictors: altitude,
-  total slopes, lifts, vertical drop, GDP per capita, PPP, snow cover.
+  total slopes, lifts, vertical drop, GDP per capita, snow cover.
 - **ANOVA** (`aov` + `TukeyHSD`) — for categorical predictors with several
   levels: altitude band, continent, season.
 - **Welch t-tests** (`t.test`) — for yes/no service flags: snowpark, night
@@ -48,7 +48,7 @@ factor into a single model. The methods used are:
   associations between two categorical variables (e.g. continent vs. price
   tier, summer skiing vs. continent).
 - **Multiple linear regression** (`lm`) — final step: a main model with the
-  well-populated suspects (mountain, geography/wealth incl. GDP & PPP, services)
+  well-populated suspects (mountain, geography/wealth incl. GDP, services)
   plus a secondary model adding snow cover on the ~125 snow-matched resorts. Each
   estimates a factor's effect on price *holding the others constant*. Only the raw
   `summary()` coefficient table is reported, to stay within the course toolkit.
@@ -67,11 +67,14 @@ how much each variable moves price once the others are controlled for.
 |------|------|
 | `data/resorts.csv` | Main dataset — 499 resorts × 25 variables (Kaggle *Ski Resorts*), read as Latin-1. |
 | `data/snow.csv` | Monthly snow-cover values on a Lat/Lon grid, aggregated and joined to resorts. |
-| `data/gdp_per_capita_raw.csv` → `_clean.csv` | World Bank GDP per capita (2022) — proxy for national wealth. |
-| `data/ppp_raw.csv` → `_clean.csv` | World Bank PPP (2022) — proxy for local price level. |
+| `data/gdp_per_capita_raw.csv` → `_clean.csv` | World Bank GDP per capita (2022, current US$) — proxy for national wealth. |
 
-The `_raw` → `_clean` convention keeps the original World Bank files next to the
-tidied versions for reproducibility/auditing.
+The `_raw` → `_clean` convention keeps the original World Bank file next to the
+tidied version for reproducibility/auditing.
+
+> The World Bank PPP indicator was dropped from the analysis: it is a *conversion
+> factor* in local currency units per international dollar, so its cross-country
+> values reflect currency denomination rather than local price levels.
 
 ### Data preparation highlights
 - **Missing values** — explicit `NA`s counted; "impossible" zeros (e.g.
@@ -80,15 +83,19 @@ tidied versions for reproducibility/auditing.
   (`Winter_Only`, `Summer_Only`, `Multi_Season`, `Year_Round`).
 - **Derived variables** — `Vertical_Drop` (highest − lowest) and `Altitude_Band`
   (binned altitude).
-- **External merges** — GDP/PPP joined by country (with a name-alignment map);
+- **External merges** — GDP joined by country (with a name-alignment map);
   snow joined by rounded coordinates.
+- **Currency** — lift-pass `Price` is converted from EUR to USD (2022 ECB
+  average, 1 EUR = 1.053 USD) so it shares the currency of World Bank GDP per
+  capita (current US$); correlations are scale-invariant, so this does not
+  change any test result.
 
 ---
 
 ## Workflow
 
 ```
-Import → Clean (NAs, Season, derived vars) → Merge external (GDP, PPP, snow)
+Import → Clean (NAs, Season, derived vars) → Merge external (GDP, snow)
       → Test each suspect bivariately (Suspects 1–4)
       → Consolidate + rank all results (Synthesis)
       → Multiple regression: all factors together, effects held constant
@@ -122,5 +129,4 @@ R, run via Jupyter (`ski_analysis.ipynb`). Packages: **`rio`** (import/export),
 
 ## Data sources
 - Kaggle — *Ski Resorts* dataset
-- World Bank — GDP per capita (2022)
-- World Bank — PPP conversion factor (2022)
+- World Bank — GDP per capita (2022, current US$)

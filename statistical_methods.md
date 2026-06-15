@@ -24,7 +24,7 @@ reason about, so they are grouped into four hypotheses ("suspects"), each a
 coherent story about why price might be high:
 
 1. **The mountain itself** — bigger/higher resorts cost more (altitude, slopes, lifts).
-2. **Geography & wealth** — richer / more expensive countries charge more (continent, GDP, PPP).
+2. **Geography & wealth** — richer countries charge more (continent, GDP per capita).
 3. **Services & positioning** — extras justify a premium (snowpark, night skiing, …).
 4. **The actual snow** — more reliable snow supports higher prices.
 
@@ -69,11 +69,19 @@ judgement call with a reason:
   (binned altitude) are *constructed* because they capture an idea ("how much
   mountain is there") more directly than the raw columns.
 
-- **External data (GDP, PPP).** To test Suspect 2 we need country-level economics
-  the resorts file doesn't contain, so World Bank indicators are merged in:
-  **GDP per capita** = national wealth; **PPP** = local price level / cost of living.
-  They are joined by country name (with a small rename map to reconcile spellings
-  like "Czechia" → "Czech Republic").
+- **External data (GDP per capita).** To test Suspect 2 we need country-level
+  economics the resorts file doesn't contain, so the World Bank **GDP per capita**
+  (current US$) indicator is merged in as a proxy for national wealth, joined by
+  country name (with a small rename map to reconcile spellings like
+  "Czechia" → "Czech Republic"). *An earlier version also merged the World Bank
+  PPP conversion factor as a "cost of living" proxy, but it was dropped — that
+  factor is denominated in local currency units per international dollar, so its
+  cross-country values reflect currency denomination, not price levels (see §4.1).*
+
+- **Currency.** The lift-pass `Price` is converted from EUR to USD (2022 ECB
+  average, 1 EUR = 1.053 USD) so it shares the currency of GDP per capita. Because
+  correlation is scale-invariant, this changes no test result — only the units of
+  the means and regression coefficients.
 
 - **Snow joined by coordinates.** The snow data is on a latitude/longitude grid, not
   by resort. Rounding both to a common 0.25° grid and aggregating lets us attach a
@@ -128,7 +136,7 @@ number vs. category). That mapping is the single most important idea here:
 
 | Predictor → Outcome | Test used | Used in the notebook for |
 |---|---|---|
-| number → number | **Correlation** (`cor.test`) | price vs altitude, slopes, lifts, GDP, PPP, snow |
+| number → number | **Correlation** (`cor.test`) | price vs altitude, slopes, lifts, GDP, snow |
 | category (2 groups) → number | **t-test** (`t.test`) | price with vs without a service |
 | category (3+ groups) → number | **ANOVA** (`aov` + Tukey) | price by continent / altitude band / season |
 | category → category | **Chi-square** (`chisq.test`) + Cramér's V | continent vs price tier; summer-skiing vs continent |
@@ -149,8 +157,16 @@ value is missing, rather than failing. Without it, a single `NA` breaks the
 calculation.
 
 **Example in the notebook.** Price vs maximum altitude gave r ≈ 0.41 (moderate,
-highly significant): higher resorts do charge more. Price vs PPP gave r ≈ −0.04
-(essentially zero): no linear link.
+highly significant): higher resorts do charge more. Price vs GDP per capita gave
+r ≈ 0.46 (moderate, significant): richer countries charge more.
+
+> **Why PPP was dropped.** An earlier version correlated price against the World
+> Bank PPP *conversion factor*. That number is denominated in **local currency
+> units per international dollar**, so across countries its magnitude is driven by
+> how each currency is denominated (Norway ≈ 8, Japan ≈ 95, South Korea ≈ 810…),
+> not by local price levels — which made the correlation meaningless (it came out
+> r ≈ −0.04). A proper cost-of-living measure would be the *price level index*
+> (PPP ÷ market exchange rate, World Bank `PA.NUS.PPPC.RF`), which is unit-free.
 
 **Caution.** `r` only captures *straight-line* relationships, and correlation is
 not causation (§4.4).
@@ -233,7 +249,7 @@ answers "how much does each factor *really* move price."
 
 ### 5.2 How to read the output
 
-- **`Estimate` (the coefficient).** For a numeric predictor: the euro change in
+- **`Estimate` (the coefficient).** For a numeric predictor: the dollar change in
   price per one-unit increase, others held fixed. For a category: the gap versus the
   baseline level (e.g. "North America" vs the reference continent).
 - **`Pr(>|t|)`.** The p-value for each coefficient — is this effect distinguishable
@@ -244,7 +260,7 @@ answers "how much does each factor *really* move price."
 
 **The headline finding.** Once everything is in one model, **continent** and
 **maximum altitude** remain the dominant, significant drivers, **GDP** matters,
-**snowpark** adds a small premium, and PPP / night skiing / summer skiing / season
+**snowpark** adds a small premium, and night skiing / summer skiing / season
 fade — their apparent bivariate effects were largely confounded.
 
 ### 5.3 Why snow gets a *second* regression
@@ -294,8 +310,10 @@ a clear pattern = small p; a shapeless cloud = large p.
 - **Single snapshot.** Prices and external indicators are one year; no trends.
 - **Reconstructed data.** Masked zeros, heavy `Season` recoding, and a coarse
   coordinate-based snow join all introduce some approximation.
-- **Country-level economics.** GDP and PPP are national averages applied to every
-  resort in that country — they cannot capture within-country variation.
+- **Country-level economics.** GDP per capita is a national average applied to
+  every resort in that country — it cannot capture within-country variation.
+- **Currency conversion.** Prices were converted EUR→USD at a single 2022 average
+  rate, ignoring within-year fluctuation.
 
 ---
 
