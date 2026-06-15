@@ -3632,32 +3632,8 @@ t.test(resorts$Price[resorts$`Child friendly` == &quot;Yes&quot;],
 ## mean of x mean of y 
 ##  52.27950  48.17475</code></pre>
 </div>
-<div id="associazione-tra-sci-estivo-e-geografia-chi-quadrato" class="section level2" number="6.3">
-<h2><span class="header-section-number">6.3</span> Associazione tra sci
-estivo e geografia (Chi-quadrato)</h2>
-<p>Lo sci estivo <em>sembra</em> un sovrapprezzo: verifichiamo se non
-sia in realtà una caratteristica geografica. Mettiamo in relazione due
-variabili categoriche con un test <strong>Chi-quadrato</strong> e ne
-misuriamo la forza con il <strong>V di Cramér</strong> (0 = nessuna
-associazione, 1 = perfetta).</p>
-<pre class="r"><code>tab_summer &lt;- table(resorts$`Summer skiing`, resorts$Continent)
-tab_summer</code></pre>
-<pre><code>##      
-##       Asia Europe North America Oceania South America
-##   No    24    349            97       0             0
-##   Yes    0     11             1      10             7</code></pre>
-<pre class="r"><code>chisq.test(tab_summer)</code></pre>
-<pre><code>## 
-##  Pearson&#39;s Chi-squared test
-## 
-## data:  tab_summer
-## X-squared = 286.1, df = 4, p-value &lt; 2.2e-16</code></pre>
-<pre class="r"><code>cramerV(tab_summer)</code></pre>
-<pre><code>## Cramer V 
-##   0.7572</code></pre>
-</div>
-<div id="anova-prezzo-per-stagionalità" class="section level2" number="6.4">
-<h2><span class="header-section-number">6.4</span> ANOVA: prezzo per
+<div id="anova-prezzo-per-stagionalità" class="section level2" number="6.3">
+<h2><span class="header-section-number">6.3</span> ANOVA: prezzo per
 stagionalità</h2>
 <p><code>Year_Round</code> e <code>Multi_Season</code> sono minuscole (4
 ciascuna), quindi questo è esplorativo.</p>
@@ -3688,8 +3664,8 @@ summary(anova_season)</code></pre>
 ## Year_Round-Summer_Only    -0.7066184 -32.03586 30.6226232 0.9999293
 ## Year_Round-Winter_Only    11.8595029 -16.74546 40.4644626 0.7086030</code></pre>
 </div>
-<div id="conclusione-preliminare-indiziato-3" class="section level2" number="6.5">
-<h2><span class="header-section-number">6.5</span> Conclusione
+<div id="conclusione-preliminare-indiziato-3" class="section level2" number="6.4">
+<h2><span class="header-section-number">6.4</span> Conclusione
 preliminare — Indiziato 3</h2>
 <blockquote>
 <p>I servizi non sono un sovrapprezzo uniforme. Lo
@@ -3697,9 +3673,8 @@ preliminare — Indiziato 3</h2>
 $</strong> (54,6 vs 44,8 $, p &lt; 0,001); <strong>sci notturno</strong>
 (p ≈ 0,52) e <strong>adatto ai bambini</strong> (p ≈ 0,75, quasi
 universale: 495/499) non aggiungono nulla. Lo <strong>sci
-estivo</strong> sembra un premio di +14 $ ma è in realtà geografico: il
-Chi-quadrato lo lega fortissimamente al continente (V di Cramér ≈ 0,76)
-— è la posizione, non la scelta commerciale.</p>
+estivo</strong> sembra un premio di +14 $ ma è in realtà un fattore
+geografico.</p>
 </blockquote>
 </div>
 </div>
