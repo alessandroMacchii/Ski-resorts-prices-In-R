@@ -33,8 +33,8 @@ ranked summary table at the end.
 
 This is primarily a **descriptive + inferential statistics** project. The core
 of it uses course-level **bivariate** methods (one predictor vs. price at a
-time), and it then closes with a **multiple regression** that brings every
-factor into a single model. The methods used are:
+time), and it then consolidates every result into a ranked **summary table**.
+The methods used are:
 
 - **Descriptive statistics** — `summary()`, group means/medians/SD, histograms,
   frequency tables.
@@ -47,17 +47,14 @@ factor into a single model. The methods used are:
 - **Chi-square tests** (`chisq.test`) + **Cramér's V** (`cramerV`) — for
   associations between two categorical variables (e.g. continent vs. price
   tier, summer skiing vs. continent).
-- **Multiple linear regression** (`lm`) — final step: a main model with the
-  well-populated suspects (mountain, geography/wealth incl. GDP, services)
-  plus a secondary model adding snow cover on the ~125 snow-matched resorts. Each
-  estimates a factor's effect on price *holding the others constant*. Only the raw
-  `summary()` coefficient table is reported, to stay within the course toolkit.
+- **Summary table** — every bivariate result is consolidated into one table and
+  ranked by effect strength (the synthesis / "verdict" of the analysis).
 - **Visualization** (`ggplot2`) — each test is paired with an inline chart
   (histogram, scatter, boxplot) so the notebook reads as a written report.
 
 Each bivariate test is stated with explicit H0/H1 hypotheses and read off
-statistical significance **and** effect strength; the regression then quantifies
-how much each variable moves price once the others are controlled for.
+statistical significance **and** effect strength; the summary table then ranks
+the factors by how strongly each is associated with price.
 
 ---
 
@@ -98,8 +95,7 @@ tidied version for reproducibility/auditing.
 Import → Clean (NAs, Season, derived vars) → Merge external (GDP, snow)
       → Test each suspect bivariately (Suspects 1–4)
       → Consolidate + rank all results (Synthesis)
-      → Multiple regression: all factors together, effects held constant
-      → Conclude
+      → Conclude (summary table)
 ```
 
 ---
@@ -112,12 +108,10 @@ Import → Clean (NAs, Season, derived vars) → Merge external (GDP, snow)
   skiing, child-friendly.
 - **Surprises:** services aren't a uniform premium; "summer skiing" looks like a
   premium but is really *geography in disguise* (very strong continent link).
-- **Untangling confounders:** because bivariate tests can't tell whether
-  continent matters on its own or only because those resorts are also
-  bigger/higher, the closing multiple regression estimates each effect with the
-  others held constant — confirming continent and altitude as the dominant
-  drivers and shrinking some apparent effects (e.g. summer skiing) once
-  geography is accounted for.
+- **A caveat on confounders:** these are *bivariate* results, so they can't fully
+  tell whether continent matters on its own or only because those resorts are also
+  bigger/higher. The ranked summary table reports the association of each factor
+  with price, not its effect with the others held constant.
 
 ---
 

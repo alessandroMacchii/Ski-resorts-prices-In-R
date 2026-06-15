@@ -31,17 +31,18 @@ coherent story about why price might be high:
 This is a standard way to structure exploratory work: turn a vague question into a
 small set of **testable hypotheses**, then test each one.
 
-### 1.3 Why bivariate tests first, then one regression
+### 1.3 Why bivariate tests, then one summary table
 
-The bulk of the notebook tests **one predictor against price at a time**
-("bivariate" = two variables). This is the natural first pass: it is simple,
-transparent, and each test answers a clean yes/no question.
+The notebook tests **one predictor against price at a time** ("bivariate" = two
+variables). This is the natural approach: it is simple, transparent, and each
+test answers a clean yes/no question.
 
 Its weakness is **confounding** (see §4.4): a bivariate test cannot tell whether
 continent matters *on its own* or only because North-American resorts also happen
-to be bigger and higher. So the analysis ends with **one multiple regression**,
-which looks at all suspects *together* and isolates each effect. Bivariate for
-clarity, regression for the final verdict.
+to be bigger and higher. The analysis therefore stays deliberately bivariate and
+ends by **consolidating every result into one ranked summary table** — the
+synthesis — while being explicit that the figures are associations, not
+effects-with-others-held-constant.
 
 ---
 
@@ -81,12 +82,12 @@ judgement call with a reason:
 - **Currency.** The lift-pass `Price` is converted from EUR to USD (2022 ECB
   average, 1 EUR = 1.053 USD) so it shares the currency of GDP per capita. Because
   correlation is scale-invariant, this changes no test result — only the units of
-  the means and regression coefficients.
+  the means and the effect sizes (e.g. group differences).
 
 - **Snow joined by coordinates.** The snow data is on a latitude/longitude grid, not
   by resort. Rounding both to a common 0.25° grid and aggregating lets us attach a
-  snow value to each resort. It only matched ~25% of resorts — which is *why* snow is
-  handled separately in the regression (see §5.3).
+  snow value to each resort. It only matched ~25% of resorts — which is *why* snow
+  is the most fragile of the four suspects and read with extra caution.
 
 ---
 
@@ -122,7 +123,7 @@ twice:
 
 - **Is it real?** → the p-value.
 - **Is it big?** → the **effect size** (the correlation `r`, the gap between group
-  means, Cramér's V, the regression coefficient).
+  means, Cramér's V).
 
 This is why the notebook reports both and ranks suspects by effect *strength*, not
 just by significance.
@@ -139,8 +140,7 @@ number vs. category). That mapping is the single most important idea here:
 | number → number | **Correlation** (`cor.test`) | price vs altitude, slopes, lifts, GDP, snow |
 | category (2 groups) → number | **t-test** (`t.test`) | price with vs without a service |
 | category (3+ groups) → number | **ANOVA** (`aov` + Tukey) | price by continent / altitude band / season |
-| category → category | **Chi-square** (`chisq.test`) + Cramér's V | continent vs price tier; summer-skiing vs continent |
-| many predictors → number | **Linear regression** (`lm`) | the final all-suspects model |
+| category → category | **Chi-square** (`chisq.test`) + Cramér's V | summer-skiing vs continent |
 
 ### 4.1 Correlation — `cor.test`
 
@@ -181,7 +181,7 @@ and asks whether the difference is real or chance.
   groups have equal variance — the safe, more robust choice.
 
 **Example.** Price for resorts *with* a snowpark vs *without*. Snowpark resorts
-averaged ~€9 more, and the t-test said that gap is significant — a real premium.
+averaged ~$10 more, and the t-test said that gap is significant — a real premium.
 Night skiing, by contrast, showed no significant price difference.
 
 ### 4.3 ANOVA — `aov` + `TukeyHSD`
@@ -199,7 +199,7 @@ compares the **means of a numeric variable across 3 or more groups** at once.
 testing many pairs inflates the chance of a false positive.
 
 **Example.** Price by continent: F ≈ 117, p < 0.001 — the biggest effect in the
-study. Tukey then showed North America sits ~€36 above Europe specifically.
+study. Tukey then showed North America sits ~$38 above Europe specifically.
 
 ### 4.4 A word on confounding & causation
 
@@ -207,7 +207,7 @@ Two variables can move together for three reasons: A causes B, B causes A, or a
 **third variable C drives both** (confounding). Bivariate tests cannot distinguish
 these. "Summer skiing" *looks* like a price premium, but it is concentrated in
 specific regions — so the apparent effect is really geography. This is the core
-limitation that motivates the regression in §5.
+limitation behind reading every result as *association, not isolated effect*.
 
 ### 4.5 Chi-square test of independence — `chisq.test`
 
@@ -232,59 +232,7 @@ pricing lever.
 
 ---
 
-## 5. Multiple linear regression — `lm`
-
-### 5.1 What it is
-
-A regression models the outcome as a weighted sum of all predictors at once:
-
-```
-Price ≈ b0 + b1·(altitude) + b2·(slopes) + … + (continent effects) + …
-```
-
-Fitting the model finds the coefficients `b` that best predict price. The crucial
-property: **each coefficient is the effect of that predictor while holding all the
-others constant.** That is exactly what bivariate tests cannot do — and exactly what
-answers "how much does each factor *really* move price."
-
-### 5.2 How to read the output
-
-- **`Estimate` (the coefficient).** For a numeric predictor: the dollar change in
-  price per one-unit increase, others held fixed. For a category: the gap versus the
-  baseline level (e.g. "North America" vs the reference continent).
-- **`Pr(>|t|)`.** The p-value for each coefficient — is this effect distinguishable
-  from zero, given the others are in the model?
-- **Adjusted R².** The share of all price variation the model explains (0–1).
-  Higher = the predictors account for more of why prices differ. The notebook's main
-  model reaches ≈ 0.70, i.e. it explains about 70% of price variation.
-
-**The headline finding.** Once everything is in one model, **continent** and
-**maximum altitude** remain the dominant, significant drivers, **GDP** matters,
-**snowpark** adds a small premium, and night skiing / summer skiing / season
-fade — their apparent bivariate effects were largely confounded.
-
-### 5.3 Why snow gets a *second* regression
-
-Snow cover only matched ~25% of resorts. Because regression drops any row missing
-*any* predictor, putting snow in the main model would shrink it from ~460 resorts to
-~110. So snow is tested in a **separate model on just the snow-matched resorts**,
-using the same controls. Result: snow has **no significant independent effect** once
-altitude and continent are accounted for — it is largely a stand-in for altitude.
-This confirms Suspect 4's hypothesis was, in the end, mostly about altitude.
-
-### 5.4 An honest scope note
-
-Multiple regression is the standard, correct tool for this question, and it is the
-only step that genuinely synthesises the four suspects. It is included for that
-reason even though the explicit `lm()` syntax sat slightly beyond the course's
-core toolkit. To stay close to the program, the notebook reports **only the raw
-coefficient table** from `summary()` — it deliberately omits standardized
-coefficients (which need `scale()`) and the variance-decomposition table (which
-needs `anova()` on an `lm`), as both rely on functions outside the taught set.
-
----
-
-## 6. Why the plots are the analyses, drawn
+## 5. Why the plots are the analyses, drawn
 
 Each chart is not new analysis — it is a **picture of a test already run**, because
 every test measures a *relationship*, and relationships can be drawn:
@@ -301,7 +249,7 @@ a clear pattern = small p; a shapeless cloud = large p.
 
 ---
 
-## 7. Limitations (worth stating honestly)
+## 6. Limitations (worth stating honestly)
 
 - **Correlation ≠ causation.** This is observational data; the tests reveal
   association, not proof of cause.
@@ -321,6 +269,6 @@ a clear pattern = small p; a shapeless cloud = large p.
 
 The notebook turns a single question ("what sets ski-pass prices?") into four
 hypotheses, tests each with the statistical tool matched to its variable types
-(correlation, t-test, ANOVA, chi-square), then uses one regression to separate the
-real drivers from the confounded ones — concluding that **geography and altitude,
-not snow or services, are what actually move the price.**
+(correlation, t-test, ANOVA, chi-square), then consolidates everything into a
+ranked summary table — concluding that **geography and altitude, not snow or
+services, are what is most strongly associated with the price.**

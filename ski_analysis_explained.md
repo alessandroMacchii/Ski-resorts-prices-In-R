@@ -4,17 +4,16 @@ A plain-English walkthrough of `ski_analysis.ipynb`, one cell at a time. The
 notebook investigates **what drives the price of a ski lift pass worldwide**,
 framed as four "suspects" (groups of factors), each tested with course-level
 statistics (correlation, t-test, ANOVA). Cell numbers match the notebook order
-(0-based); the notebook has **64 cells (0–63)**.
+(0-based); the notebook has **58 cells (0–57)**.
 
 **Packages used:** `rio` (import/export), `dplyr` (data wrangling), `ggplot2`
 (charts), `rcompanion` (loaded but, in the current notebook, not actually
-called). The body of the notebook is bivariate; a **multiple regression**
-(`lm`) is added at the end (Section 8.5) to estimate each factor's effect with
-the others held constant.
+called). The notebook is entirely **bivariate**: it tests one factor against
+price at a time and ends with a ranked summary table (no regression).
 
 > **Heads-up on scope.** The notebook's tests are: **7 correlations**, **4
-> t-tests**, **3 ANOVAs**, and **2 regressions**. There are **no chi-square /
-> Cramér's V tests** in the code — the two "chi-square" rows and the extra snow
+> t-tests**, and **3 ANOVAs**. There are **no chi-square / Cramér's V tests** and
+> **no regression** in the code — the two "chi-square" rows and the extra snow
 > rows that appear in the summary table (cell 54) are hardcoded/placeholder
 > values whose underlying tests are *not* run anywhere in the notebook. See
 > "Things still to finish" at the bottom.
@@ -153,7 +152,7 @@ Documents that name-alignment is handled in code (one `rename_map`). Then opens
 A `ggplot2` histogram of price with a median line — the first inline chart.
 
 **Cell 28 — *(markdown)* Distribution + correlation hypotheses.**
-Notes price is right-skewed (mean 54.1 USD > median 47.4 USD) and states the
+Notes price is right-skewed (mean 52.2 USD > median 48.4 USD) and states the
 H0/H1 used for all correlation tests.
 
 **Cell 29 — *(code)* Correlations with price.**
@@ -284,8 +283,8 @@ then opens the **Consolidated Summary Table**.
 
 ## Section 8 — Synthesis: The Verdict
 
-*A summary-table ranking that consolidates the bivariate results, before the
-multiple regression in Section 8.5 brings every factor into one model.*
+*A summary-table ranking that consolidates the bivariate results — the analysis's
+final verdict.*
 
 **Cell 54 — *(code)* Build the summary table.** ⭐ centerpiece
 A base-R `data.frame` with one row per intended bivariate result. Columns:
@@ -304,61 +303,17 @@ strongest factors sort to the top (NA/TBD fall to the bottom). Secondary sort by
 directly comparable). Prints the ranked table.
 
 **Cell 56 — *(markdown)* Interpretation: ranking the suspects.**
-Narrative reading of the table: **Top 3 drivers** = Continent, Maximum altitude,
-Resort size (slopes). **Weak suspects** = lifts, vertical drop, seasonality,
-night skiing, child-friendly. **Surprises** = services aren't a uniform premium;
-summer skiing's "premium" is really geography in disguise. **Key limitation:**
-bivariate tests can't disentangle confounded effects (e.g. is it the continent,
-or that those resorts are also bigger/higher?) — which is exactly what the
-multiple regression in Section 8.5 addresses next.
+Narrative reading of the table: **Top 3 drivers** = Continent, National wealth
+(GDP), Maximum altitude. **Weak suspects** = resort size, lifts, vertical drop,
+seasonality, night skiing, child-friendly. **Surprises** = services aren't a
+uniform premium; summer skiing's "premium" is really geography in disguise.
+**Key limitation:** these are *bivariate* results and can't fully disentangle
+confounded effects (e.g. is it the continent, or that those resorts are also
+bigger/higher?).
 
----
-
-## Section 8.5 — Multiple Regression (beyond the bivariate tests)
-
-> **Why:** every test before this looks at one factor at a time, so it can't tell
-> whether continent matters on its own or only because those resorts are also
-> bigger/higher. A multiple regression estimates each factor's effect **holding
-> the others constant** — directly quantifying how much each variable moves price.
-
-**Cell 57 — *(markdown)* Section intro.**
-Frames the regression as one step past the course-level bivariate methods and as
-the answer to the confounding limitation raised in the synthesis.
-
-**Cell 58 — *(markdown)* Scope note.**
-Notes that explicit `lm()` syntax sat slightly beyond the course program, and
-that **only the raw coefficient table from `summary(model)`** is reported.
-
-**Cell 59 — *(code)* Fit the main model.** ⭐ key cell
-Builds `model_data` by `select()`ing price + predictors and `na.omit()`ing, then
-fits `lm(Price ~ .)`. Predictors cover **three of the four suspects**: Suspect 1
-(`Highest point`, `Total slopes`, `Total lifts`), Suspect 2 (`Continent`,
-`GDP_per_capita`), Suspect 3 (`Snowparks`, `Nightskiing`, `Summer skiing`,
-`Season`). **Only snow (Suspect 4) is held out** — it matched just ~125 of 499
-resorts, so including it would gut the sample; it gets its own model in cell 61.
-Prints sample size + `summary(model)`.
-
-**Cell 60 — *(markdown)* Reading the main model.**
-How to read the raw coefficients (`Estimate`, `Pr(>|t|)`, Adjusted R²): maximum
-altitude, continent (North America) and GDP carry the clear significant effects;
-snowpark adds a small premium; night skiing, summer skiing and season add
-little. Ends by explicitly noting that **variance decomposition (`anova(lm)`)
-and standardized coefficients (`scale()`) are omitted as out of course scope** —
-raw coefficients only.
-
-**Cell 61 — *(code)* Secondary snow model.**
-Gives Suspect 4 its controlled test: same predictors **plus `Mean_Snow`**, but on
-just the ~125 snow-matched resorts (`na.omit()` enforces it). Reports the sample
-size and `summary(model_snow)`. Read as indicative — small sample, and some
-continents thin out. Tests whether snow has any effect on price independent of
-altitude.
-
-**Cell 62 — *(markdown)* Reading the regression.**
-How to interpret both models, what to expect (continent + altitude stay on top;
-summer-skiing's apparent effect shrinks once continent is in = the confounding
-made explicit; snow has no independent effect once altitude/continent are
-present), and caveats (small snow sample,
-multicollinearity, association ≠ causation).
+> **Note:** an earlier version of the notebook closed with a multiple regression
+> (Section 8.5). It was removed — the analysis now ends at the bivariate summary
+> table. The conclusion is that table, not a regression.
 
 ---
 
@@ -373,8 +328,8 @@ charts** in total:
 
 | Chart | Cell | Sits next to | Shows |
 |-------|------|--------------|-------|
-| Price histogram | 27 | the price-distribution cell | the right skew (median line) |
-| Price vs altitude scatter (+`lm` line) | 30 | the altitude correlation | the strongest numeric driver |
+| Price histogram | 27 | the price-distribution cell | the right skew |
+| Price vs altitude scatter | 30 | the altitude correlation | the strongest numeric driver |
 | Price by continent boxplot | 37 | the continent ANOVA | the single biggest driver |
 | Snow vs price scatter | 52 | the snow correlation | snow's near-zero link |
 
@@ -382,13 +337,15 @@ charts** in total:
 
 ## Section 9 — Conclusions
 
-**Cell 63 — *(markdown)* Conclusions + references.**
-Placeholders ("*To be written*") for: the one-sentence answer, the "surprise",
-practical implications, and open questions. The **Limitations** list *is*
-written (masked zeros, heavy Season recoding, under-represented continents,
-single-year snapshot, correlation≠causation, country-level external data). Ends
-with the **Data Sources & References** list (Kaggle ski resorts + snow, World
-Bank GDP) and an Appendix session-info header.
+**Cell 57 — *(markdown)* Conclusions + references.**
+The conclusion is a **summary table** recapping every analysis (one row per
+factor: test, result, effect strength) plus a one-line takeaway — geography
+(continent), national wealth and altitude drive price, not snow or services.
+Followed by the **Limitations** list (masked zeros, heavy Season recoding,
+under-represented continents, single-year snapshot, correlation≠causation,
+country-level GDP, EUR→USD conversion) and the **Data Sources & References**
+list (Kaggle ski resorts + snow, World Bank GDP), then an Appendix session-info
+header.
 
 ---
 
@@ -398,17 +355,14 @@ Bank GDP) and an Appendix session-info header.
 Import → Clean (NAs, Season, derived vars) → Merge external (GDP, snow)
       → Test each suspect bivariately (Sec 4–7)
       → Consolidate + rank all results (Sec 8)
-      → Multiple regression: all factors at once (Sec 8.5)
-      → Conclude (Sec 9)
+      → Conclude — summary table + limitations (Sec 9)
 ```
 
 ### Things still to finish (look for "*To be written*" / placeholders)
 - Suspect 2, 3, 4 preliminary conclusions (cells 40, 46, 53) — still stubs.
-- Section 9 narrative (cell 63): answer, surprise, practical implications, open
-  questions.
 - **The summary table (cell 54) lists tests the notebook never runs:** the two
-  chi-square rows (continent vs price tier; summer-skiing vs continent) and the
+  chi-square rows (continent vs price category; summer-skiing vs continent) and the
   "snow vs altitude" / "snow by continent" rows. Either add the `chisq.test()` /
   `cramerV()` and snow tests (the `rcompanion` package is already loaded for
   Cramér's V), or drop those rows so the table only reports tests that were
-  actually computed.
+  actually computed. *(The final conclusions table in cell 57 already drops them.)*
