@@ -313,9 +313,20 @@ TukeyHSD(anova_altitude)
 **Ipotesi:** i prezzi variano per regione a causa del contesto economico di ogni
 Paese (potere d'acquisto, costo della vita, mercato turistico).
 
-## ANOVA: prezzo per continente
+## Prezzo per continente
 
-**Ipotesi:**
+```{r descrittiva-continente}
+resorts %>%
+  group_by(Continent) %>%
+  summarise(
+    N       = n(),
+    Media   = round(mean(Price, na.rm = TRUE), 1),
+    Mediana = round(median(Price, na.rm = TRUE), 1),
+    DS      = round(sd(Price, na.rm = TRUE), 1)
+  )
+```
+
+## ANOVA: prezzo per continente
 
 - H0: il prezzo medio è uguale in tutti i continenti
 - H1: almeno un continente ha un prezzo medio significativamente diverso
@@ -340,7 +351,37 @@ Confrontando ogni continente con l'**Europa** (riferimento, 360 comprensori):
 
 > **Messaggio chiave:** il Nord America è in una categoria a sé — uno skipass lì costa quasi il **doppio** rispetto a Europa e Asia. È il divario più grande trovato nell'intero studio.
 
-```{r grafico-continente, fig.width=7, fig.height=5}
+```{r grafico-barre-continente, fig.width=8, fig.height=5}
+cont_summary <- resorts %>%
+  filter(!is.na(Price), !is.na(Continent)) %>%
+  group_by(Continent) %>%
+  summarise(Prezzo_medio = round(mean(Price, na.rm = TRUE), 1), .groups = "drop")
+
+ggplot(cont_summary,
+       aes(x = reorder(Continent, Prezzo_medio), y = Prezzo_medio)) +
+  geom_col(fill = blue, width = 0.65) +
+  geom_text(aes(label = paste0("$ ", Prezzo_medio)),
+            hjust = -0.12, fontface = "bold", size = 4.2, colour = "gray20") +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, max(cont_summary$Prezzo_medio) * 1.28),
+                     labels = function(x) paste0("$ ", x)) +
+  labs(
+    title    = "Il Nord America è il continente più caro",
+    subtitle = "Prezzo medio dello skipass per continente (USD)",
+    x        = NULL,
+    y        = "Prezzo medio (USD)",
+    caption  = "499 comprensori sciistici nel mondo | dati 2022/23"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    plot.title         = element_text(face = "bold", size = 14),
+    plot.subtitle      = element_text(colour = "gray45", size = 11),
+    plot.caption       = element_text(colour = "gray60", size = 9)
+  )
+```
+
+```{r grafico-boxplot-continente, fig.width=7, fig.height=5}
 cont_data <- filter(resorts, !is.na(Price) & !is.na(Continent))
 ggplot(cont_data,
        aes(x = reorder(Continent, Price, FUN = median),
@@ -354,18 +395,17 @@ ggplot(cont_data,
 
 ## Correlazione con la ricchezza nazionale
 
-La domanda: i prezzi riflettono quanto è ricco il Paese?
+I prezzi riflettono quanto è ricco il Paese? Sia `Price` sia il PIL pro capite
+sono espressi in dollari USA, quindi il confronto avviene in un'unica valuta.
 
-- **PIL pro capite** → i prezzi riflettono la ricchezza nazionale?
-
-Sia `Price` sia il PIL pro capite sono ora espressi in dollari USA, quindi il
-confronto avviene in un'unica valuta.
+- H0: nessuna relazione lineare tra PIL pro capite e prezzo
+- H1: esiste una relazione lineare tra PIL pro capite e prezzo
 
 ```{r correlazioni-economia}
 cor.test(resorts$GDP_per_capita, resorts$Price, use = "pairwise.complete.obs")
 ```
 
-## Conclusione preliminare — analisi 2
+## Conclusione — analisi 2
 
 > È il fattore più forte dell'intero studio (ANOVA F ≈ 116,7, p < 0,001). I
 > comprensori nordamericani fanno pagare in media **~38 $ in più** di quelli
