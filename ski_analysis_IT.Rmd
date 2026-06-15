@@ -1,8 +1,7 @@
 ---
 title: "Cosa determina il prezzo di uno skipass?"
 subtitle: "Analisi statistica su 499 comprensori sciistici nel mondo"
-author: "Alessandro Macchi"
-date: "`r format(Sys.Date(), '%d %B %Y')`"
+author: "Alessandro Macchi, Riccardo Mariani, Angel Mendoza, Marco Procopio"
 output:
   html_document:
     theme: flatly
@@ -28,25 +27,16 @@ knitr::opts_chunk$set(
 
 # Obiettivo dell'analisi
 
-**Che cosa determina il prezzo di uno skipass nel mondo?**
+Il prezzo è la nostra variabile da spiegare; altitudine, Paese,
+servizi, neve ecc possono essere i fattori esplicativi. Per ragionare in modo
+ordinato raggruppiamo i candidati in quattro analisi su come il prezzo cambia.
 
-Il prezzo è la nostra variabile da spiegare; tutto il resto — altitudine, Paese,
-servizi, neve — è un possibile fattore esplicativo. Per ragionare in modo
-ordinato raggruppiamo i candidati in quattro "indiziati", ognuno una possibile
-storia sul perché un prezzo sia alto, e mettiamo ciascuno alla prova con il test
-statistico più adatto.
-
-## I quattro indiziati
+## LE quattro analisi
 
 1. **La montagna in sé** — comprensori più grandi e più alti costano di più?
 2. **Geografia e ricchezza** — la posizione e la ricchezza del Paese guidano il prezzo?
 3. **Servizi e posizionamento** — gli extra (snowpark, sci estivo…) giustificano un sovrapprezzo?
-4. **La neve vera e propria** — più neve significa prezzo più alto?
-
-L'impianto è quello classico dell'analisi esplorativa: una serie di **test
-bivariati** (un fattore alla volta contro il prezzo), trasparenti e facili da
-leggere, seguiti da una **tabella riepilogativa** che consolida e ordina tutti i
-risultati per forza dell'effetto.
+4. **La neve** — più neve significa prezzo più alto?
 
 ## Librerie
 
@@ -55,17 +45,15 @@ risultati per forza dell'effetto.
 # install.packages("dplyr")
 # install.packages("rcompanion")
 # install.packages("ggplot2")
-library(rio)          # importazione/esportazione dati
-library(dplyr)        # manipolazione dei dati
-library(rcompanion)   # Cramér's V
-library(ggplot2)      # grafici
+library(rio)          
+library(dplyr)        
+library(rcompanion)   
+library(ggplot2)      
 ```
 
 ```{r colore-casa}
-# Colore "di casa" riutilizzato in tutti i grafici
 blue <- "#2c7fb8"
 ```
-
 # Importazione e pulizia dei dati
 
 *Ski Resorts* (Kaggle): 499 comprensori, 25 variabili (posizione, struttura,
@@ -89,17 +77,15 @@ table(resorts$Continent)
 ```
 
 Il campione è prevalentemente europeo (360 su 499) e nordamericano (98); Oceania
-(10) e Sud America (7) sono sottorappresentati — da ricordare quando se ne
-interpretano i risultati.
+(10) e Sud America (7) sono sottorappresentati.
 
 ## Individuare i valori mancanti
 
 ```{r na-espliciti}
-# Controllo dei valori mancanti espliciti
 apply(resorts, 2, function(x) sum(is.na(x)))
 ```
 
-Ora cerchiamo grandi quantità di zeri che potrebbero essere NA "mascherati".
+Ora c'è la ricera degli NA, vista la grande quantità di zeri
 
 ```{r zeri-nascosti}
 colonne_num <- sapply(resorts, is.numeric)
@@ -115,12 +101,11 @@ apply(resorts[, colonne_num], 2, function(x) sum(x == 0, na.rm = TRUE))
 - `Longest run` (212): sospetto ma ambiguo, per ora lo manteniamo
 
 ```{r zeri-a-na}
-# Conversione degli zeri "impossibili" in NA
+#conversione degli zeri in NA
 resorts$Price <- ifelse(resorts$Price == 0, NA, resorts$Price)
 resorts$`Total lifts` <- ifelse(resorts$`Total lifts` == 0, NA, resorts$`Total lifts`)
 
-# Conversione del prezzo dello skipass da EUR a USD (media BCE 2022: 1 EUR = 1,053 USD)
-# così il prezzo è nella stessa valuta del PIL pro capite (Banca Mondiale, US$ correnti).
+#conversione del prezzo dello skipass da EUR a USD (1 EUR = 1,053 USD)
 EUR_USD_2022 <- 1.053
 resorts$Price <- resorts$Price * EUR_USD_2022
 
@@ -188,26 +173,20 @@ table(resorts$Altitude_Band)
 
 ## Caricamento del dataset esterno
 
-Per testare l'indiziato 2 servono dati economici a livello di Paese che il file
+Per testare l'analisi 2 servono dati economici a livello di Paese che il file
 dei comprensori non contiene. Aggiungiamo un indicatore della **Banca Mondiale
 (2022)**:
 
-- **PIL pro capite** (US$ correnti) → proxy della ricchezza nazionale.
+- **PIL pro capite** 
 
-> Il fattore di conversione **PPP** della Banca Mondiale è stato escluso: è un
+> Il fattore di conversione **PPP** della Banca Mondiale è un
 > *conversion factor* in unità di valuta locale per dollaro internazionale, quindi
-> i suoi valori tra Paesi riflettono la denominazione della valuta, non il livello
-> dei prezzi locali — una correlazione con il prezzo sarebbe priva di senso.
-
-Il file grezzo usa il formato della Banca Mondiale (preambolo di metadati + una
-colonna per anno), quindi viene prima ripulito in un file ordinato `*_clean.csv`.
+> i suoi valori tra Paesi riflettono la denominazione della valuta.
 
 ### Preparazione del file della Banca Mondiale
 
-La funzione qui sotto pulisce il file grezzo: salta il preambolo, tiene Paese +
-valore 2022, allinea i nomi dei Paesi a quelli del dataset dei comprensori e
-scrive un file ordinato a due colonne `*_clean.csv` (mantenuto accanto al `_raw`
-per riproducibilità).
+Si tiene Paese + valore 2022, allinea i nomi dei Paesi a quelli del dataset dei comprensori e
+scrive un file ordinato a due colonne. 
 
 ```{r pulizia-worldbank}
 clean_worldbank <- function(path_raw, value_name, year = "2022") {
@@ -220,7 +199,6 @@ clean_worldbank <- function(path_raw, value_name, year = "2022") {
   )
   names(clean)[2] <- value_name
 
-  # Allinea i nomi dei Paesi della Banca Mondiale alla grafia del dataset comprensori
   rename_map <- c(
     "Czechia"             = "Czech Republic",
     "Korea, Rep."         = "South Korea",
@@ -241,12 +219,11 @@ export(gdp_clean, "data/gdp_per_capita_clean.csv")
 ```
 
 ```{r merge-worldbank}
-# Carica il file pulito e unisci su Country
 gdp <- import("data/gdp_per_capita_clean.csv")
 
 resorts <- merge(resorts, gdp, by = "Country", all.x = TRUE)
 
-# Paesi che non hanno trovato corrispondenza (attesi solo veri buchi)
+#qui i paesi che non hanno trovato corrispondenza
 unique(resorts$Country[is.na(resorts$GDP_per_capita)])
 ```
 
@@ -255,17 +232,7 @@ il valore del PIL pro capite.
 
 # Panoramica descrittiva
 
-```{r descrittiva-prezzo}
-# Distribuzione del prezzo
-summary(resorts$Price)
-hist(resorts$Price,
-     main = "Distribuzione dei prezzi degli skipass",
-     xlab = "Prezzo (USD)",
-     col = "lightblue")
-```
-
 ```{r istogramma-prezzo}
-# Grafico: distribuzione del prezzo
 p_price <- ggplot(filter(resorts, !is.na(Price)), aes(x = Price)) +
   geom_histogram(binwidth = 5, fill = blue, colour = "white") +
   labs(title = "Distribuzione dei prezzi degli skipass",
@@ -280,7 +247,7 @@ La **media (~52 $) supera la mediana (48 $)** → distribuzione **asimmetrica a
 destra**: pochi comprensori premium tirano su il valore medio. La maggioranza
 dei prezzi si concentra tra 32 e 63 $.
 
-# Indiziato 1 — La montagna in sé
+# Analisi 1 — La montagna 
 
 **Ipotesi:** i comprensori più grandi/alti costano di più (più terreno, più
 infrastrutture da mantenere).
@@ -305,7 +272,6 @@ cor.test(resorts$Vertical_Drop, resorts$Price, use = "pairwise.complete.obs")
 ```
 
 ```{r grafico-altitudine}
-# Grafico: prezzo vs altitudine massima
 p_alt <- ggplot(filter(resorts, !is.na(Price)),
                 aes(x = `Highest point`, y = Price)) +
   geom_point(alpha = 0.4, colour = blue) +
@@ -336,13 +302,13 @@ summary(anova_altitude)
 TukeyHSD(anova_altitude)
 ```
 
-## Conclusione preliminare — Indiziato 1
+## Conclusione preliminare — analisi 1
 
 > L'altitudine massima e il numero di piste sono legati positivamente al prezzo,
 > ma solo in modo moderato: "più grande = più caro" è solo una parte della
 > storia. Il divario tra la fascia "Very High" e la "Low" arriva a ~43 $.
 
-# Indiziato 2 — Geografia e ricchezza
+# analisi 2 — Geografia e ricchezza
 
 **Ipotesi:** i prezzi variano per regione a causa del contesto economico di ogni
 Paese (potere d'acquisto, costo della vita, mercato turistico).
@@ -418,14 +384,14 @@ confronto avviene in un'unica valuta.
 cor.test(resorts$GDP_per_capita, resorts$Price, use = "pairwise.complete.obs")
 ```
 
-## Conclusione preliminare — Indiziato 2
+## Conclusione preliminare — analisi 2
 
 > È il fattore più forte dell'intero studio (ANOVA F ≈ 116,7, p < 0,001). I
 > comprensori nordamericani fanno pagare in media **~38 $ in più** di quelli
 > europei, il divario più ampio dell'analisi. La ricchezza del Paese conta (PIL:
 > r ≈ 0,46, p < 0,001): a muovere il prezzo è la ricchezza nazionale.
 
-# Indiziato 3 — Servizi e posizionamento commerciale
+# analisi 3 — Servizi e posizionamento commerciale
 
 **Ipotesi:** i servizi aggiuntivi (snowpark, sci notturno, sci estivo, strutture
 per famiglie) impongono un sovrapprezzo perché rivolti a segmenti di clientela
@@ -465,21 +431,6 @@ t.test(resorts$Price[resorts$`Child friendly` == "Yes"],
        resorts$Price[resorts$`Child friendly` == "No"])
 ```
 
-## Associazione tra sci estivo e geografia (Chi-quadrato)
-
-Lo sci estivo *sembra* un sovrapprezzo: verifichiamo se non sia in realtà una
-caratteristica geografica. Mettiamo in relazione due variabili categoriche con un
-test **Chi-quadrato** e ne misuriamo la forza con il **V di Cramér** (0 = nessuna
-associazione, 1 = perfetta).
-
-```{r chiquadrato-sciestivo}
-tab_summer <- table(resorts$`Summer skiing`, resorts$Continent)
-tab_summer
-
-chisq.test(tab_summer)
-cramerV(tab_summer)
-```
-
 ## ANOVA: prezzo per stagionalità
 
 `Year_Round` e `Multi_Season` sono minuscole (4 ciascuna), quindi questo è
@@ -494,16 +445,14 @@ summary(anova_season)
 TukeyHSD(anova_season)
 ```
 
-## Conclusione preliminare — Indiziato 3
+## Conclusione preliminare — analisi 3
 
 > I servizi non sono un sovrapprezzo uniforme. Lo **snowpark** aggiunge un premio
 > reale di **~10 $** (54,6 vs 44,8 $, p < 0,001); **sci notturno** (p ≈ 0,52) e
 > **adatto ai bambini** (p ≈ 0,75, quasi universale: 495/499) non aggiungono
-> nulla. Lo **sci estivo** sembra un premio di +14 $ ma è in realtà geografico:
-> il Chi-quadrato lo lega fortissimamente al continente (V di Cramér ≈ 0,76) — è
-> la posizione, non la scelta commerciale.
+> nulla. Lo **sci estivo** sembra un premio di +14 $ ma è in realtà un fattore geografico.
 
-# Indiziato 4 — La neve vera e propria
+# analisi 4 — La neve vera e propria
 
 **Ipotesi:** i comprensori con copertura nevosa naturale più affidabile possono
 fare pagare di più perché offrono un'esperienza migliore e più prevedibile.
@@ -566,76 +515,78 @@ cor.test(resorts$Mean_Snow, resorts$Price, use = "pairwise.complete.obs")
 ```
 
 ```{r grafico-neve}
-# Neve vs prezzo (Indiziato 4)
+# Neve vs prezzo (analisi 4) - Codice Corretto
 snow_plot_data <- filter(resorts, !is.na(Mean_Snow) & !is.na(Price))
+
 p_snow <- ggplot(snow_plot_data, aes(x = Mean_Snow, y = Price)) +
-  geom_point(alpha = 0.5, colour = blue) +
+  geom_point(alpha = 0.5, colour = "blue") + # Messo "blue" tra virgolette per evitare errori
+  
+  # Questa riga aggiunge la retta di regressione lineare (tendenza)
+  geom_smooth(method = "lm", se = TRUE, colour = "darkblue", fill = "lightblue") + 
+  
   labs(title = "Copertura nevosa vs prezzo",
-       subtitle = "Sostanzialmente nessuna relazione",
+       subtitle = "Relazione debole ma reale (r = 0.15, p = 0.0009)",
        x = "Copertura nevosa media", y = "Prezzo (USD)") +
   theme_minimal()
 
 p_snow
 ```
 
-## Conclusione preliminare — Indiziato 4
+## Conclusione preliminare — analisi 4
 
 > La copertura nevosa segue l'altitudine/latitudine più che il prezzo: la
 > "affidabilità della neve" è in gran parte già incorporata nel prezzo
 > attraverso l'altitudine. Il legame bivariato con il prezzo è debole: più che la
 > neve in sé, a contare è la quota.
 
-# Sintesi: classifica degli indiziati
+# Sintesi: classifica degli analisi
 
 ## Tabella riepilogativa
 
 ```{r tabella-sintesi}
 # Consolida ogni risultato bivariato delle Sezioni 4-7 in un'unica tabella.
-
 summary_table <- data.frame(
   Factor = c(
-    "Maximum altitude (Highest point)",
-    "Total slopes",
-    "Total lifts",
-    "Vertical drop",
-    "Altitude band",
-    "Continent",
-    "National wealth (GDP per capita)",
-    "Summer skiing vs continent",
-    "Snowpark presence",
-    "Night skiing",
-    "Summer skiing",
-    "Child friendly",
-    "Seasonality (Season)",
-    "Snow cover vs price"
+    "Altitudine massima (Punto più alto)",
+    "Totale piste",
+    "Totale impianti",
+    "Dislivello",
+    "Fascia di altitudine",
+    "Continente",
+    "Ricchezza nazionale (PIL pro capite)",
+    "Presenza snowpark",
+    "Sci notturno",
+    "Sci estivo",
+    "Adatto ai bambini",
+    "Stagionalità (Stagione)",
+    "Copertura nevosa vs prezzo"
   ),
   Test_Type = c(
-    "Correlation", "Correlation", "Correlation", "Correlation",
-    "ANOVA", "ANOVA", "Correlation", "Chi-square",
+    "Correlazione", "Correlazione", "Correlazione", "Correlazione",
+    "ANOVA", "ANOVA", "Correlazione",
     "T-test", "T-test", "T-test", "T-test",
-    "ANOVA", "Correlation"
+    "ANOVA", "Correlazione"
   ),
   Statistic = c(
     0.41, 0.31, 0.10, 0.17,          # valori r
     41.21,                            # F (fascia altitudine)
     116.70,                           # F (continente)
     0.45,                             # r (PIL pro capite)
-    286.10,                           # Chi-quadrato (sci estivo vs continente)
     4.43, -0.64, 4.13, 0.35,          # valori t (servizi)
     2.92,                             # F (stagione)
     0.15                              # r (neve vs prezzo)
   ),
   P_value = c(
     "<0.001", "<0.001", "0.022", "<0.001",
-    "<0.001", "<0.001", "<0.001", "<0.001",
+    "<0.001", "<0.001", "<0.001",
     "<0.001", "0.525", "<0.001", "0.751",
     "0.034", "<0.001"
   ),
   Effect_Strength = c(
-    "Moderate", "Moderate", "Weak", "Weak",
-    "Moderate", "Strong", "Moderate", "Strong",
-    "Moderate", "Negligible", "Moderate", "Negligible",
-    "Weak", "Weak"
+    "Moderato", "Moderato", "Debole", "Debole",
+    "Moderato", "Forte", "Moderato",
+    "Moderato", "Trascurabile", "Moderato", "Trascurabile",
+    "Debole", "Debole"
   ),
   Interpretation = c(
     "Comprensori più alti costano di più; predittore numerico singolo più forte (r = 0,41).",
@@ -644,14 +595,13 @@ summary_table <- data.frame(
     "Il dislivello ha un legame positivo debole con il prezzo (r = 0,17).",
     "Il prezzo sale tra le fasce di altitudine: Very High è ~43 $ sopra Low.",
     "Il divario più grande di tutti: Nord America ~+38 $ vs Europa.",
-    "Nei Paesi più ricchi i prezzi salgono (r = 0,46).",
-    "Forte legame servizio-geografia (V = 0,76): lo sci estivo è una questione di posizione.",
+    "Nei Paesi più ricchi i prezzi salgono (r = 0,45).",
     "Lo snowpark aggiunge un premio reale di ~10 $ (54,6 vs 44,8).",
     "Nessuna differenza di prezzo tra comprensori con vs senza sci notturno.",
     "Apparente premio di +14 $, ma confuso con emisfero / ghiacciai.",
     "Quasi universale (495/499): nessun contrasto utile, non significativo.",
     "La stagionalità muove appena il prezzo; effetto piccolo e al limite.",
-    "Nessun legame utile tra quantità di neve e prezzo (r = 0,15)."
+    "Legame positivo debole ma significativo (r = 0,15); risente di collinearità con l'altezza."
   ),
   stringsAsFactors = FALSE
 )
@@ -659,21 +609,7 @@ summary_table <- data.frame(
 summary_table
 ```
 
-```{r tabella-ordinata}
-# Ordina per forza dell'effetto (più forte in cima).
-strength_levels <- c("Negligible", "Weak", "Moderate", "Strong", "Very strong")
-
-summary_ranked <- summary_table %>%
-  mutate(Strength_rank = factor(Effect_Strength, levels = strength_levels, ordered = TRUE)) %>%
-  arrange(desc(Strength_rank), desc(abs(Statistic))) %>%
-  select(-Strength_rank)
-
-# L'ordinamento secondario per |Statistic| vale solo all'interno di una stessa
-# fascia di forza (r, F, t, Chi-quadrato non sono comparabili tra loro).
-print(summary_ranked, row.names = FALSE)
-```
-
-## Interpretazione: classifica degli indiziati
+## Interpretazione: classifica degli analisi
 
 **I tre principali motori del prezzo.**
 
@@ -688,7 +624,7 @@ print(summary_ranked, row.names = FALSE)
 **Dimensione del comprensorio** (totale piste, r = 0,31, p < 0,001) — le aree più
 grandi costano di più, in modo moderato.
 
-**Indiziati deboli.** Numero di impianti (r = 0,10) e dislivello (r = 0,17) sono
+**analisi deboli.** Numero di impianti (r = 0,10) e dislivello (r = 0,17) sono
 significativi ma trascurabili; la stagionalità è al limite (F = 2,9, p = 0,034);
 sci notturno (p = 0,52) e adatto ai bambini (p = 0,75) non mostrano differenze di
 prezzo.
@@ -702,25 +638,9 @@ lega al continente con V di Cramér = 0,76.
 volta, quindi non sanno districare del tutto le cause confuse tra loro (è il
 continente, o il fatto che quei comprensori sono anche più grandi e più alti?).
 
-# Conclusioni
 
-## Riepilogo delle analisi
 
-| Fattore (indiziato) | Test | Risultato | Effetto |
-|---|---|---|---|
-| Continente — geografia | ANOVA | Nord America ~+38 $ sull'Europa (F ≈ 117, p < 0,001) | **Forte** |
-| Ricchezza nazionale — PIL pro capite | Correlazione | r ≈ 0,46 (p < 0,001): i Paesi più ricchi fanno pagare di più | Moderato |
-| Altitudine massima | Correlazione | r ≈ 0,41 (p < 0,001): i comprensori più alti costano di più | Moderato |
-| Dimensione — totale piste | Correlazione | r ≈ 0,31 (p < 0,001) | Moderato |
-| Snowpark | t-test | premio di ~+10 $ (p < 0,001) | Moderato |
-| Sci estivo | t-test / Chi-quadrato | apparente +14 $, ma in realtà geografico (V ≈ 0,76) | Debole |
-| Dislivello / totale impianti | Correlazione | r ≈ 0,17 / 0,10 | Debole |
-| Stagionalità | ANOVA | F ≈ 2,9, p ≈ 0,034 | Debole |
-| Sci notturno / adatto ai bambini | t-test | nessuna differenza di prezzo significativa | Trascurabile |
-| Copertura nevosa | Correlazione | nessun legame utile — è altitudine "mascherata" | Trascurabile |
 
-**In una frase:** il prezzo di uno skipass è guidato soprattutto da **geografia
-(continente), ricchezza nazionale e altitudine** — non dalla neve né dai servizi.
 
 ## Limiti
 
